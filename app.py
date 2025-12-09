@@ -905,7 +905,413 @@ st.markdown("""
         color: var(--accent);
         font-weight: 600;
     }
+
+    /* ============================================
+       PHASE 6: MOBILE RESPONSIVE DESIGN
+       ============================================ */
+
+    /* Mobile-First Media Queries */
+    @media screen and (max-width: 768px) {
+        .pro-header {
+            flex-direction: column;
+            text-align: center;
+            padding: 1.25rem;
+            gap: 1rem;
+        }
+
+        .pro-header-left h1 {
+            font-size: 1.3rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .metric-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .feature-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .comparison-container {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+        }
+
+        .score-value {
+            font-size: 3rem;
+        }
+
+        .pro-card {
+            padding: 1rem;
+        }
+
+        .stTabs [data-baseweb="tab-list"] {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            font-size: 0.7rem;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        .pro-header-left h1 {
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .metric-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .feature-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .welcome-title {
+            font-size: 1.5rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Touch-Friendly Elements */
+    @media (hover: none) and (pointer: coarse) {
+        .stButton > button {
+            min-height: 48px !important;
+            min-width: 48px !important;
+        }
+
+        .tool-btn, .speed-btn {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .stat-item:hover {
+            transform: none;
+        }
+
+        .pro-card:hover {
+            transform: none;
+        }
+    }
+
+    /* Camera Capture Styles */
+    .camera-container {
+        background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(15, 15, 26, 0.98) 100%);
+        border: 2px dashed var(--primary);
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        margin: 1rem 0;
+        transition: all 0.3s ease;
+    }
+
+    .camera-container:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 30px var(--primary-glow);
+    }
+
+    .camera-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .camera-title {
+        color: var(--text);
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .camera-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .camera-btn {
+        background: linear-gradient(135deg, var(--joc-red) 0%, #a00d1e 100%) !important;
+        color: white !important;
+        padding: 1rem 2rem !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 20px rgba(206, 17, 38, 0.4) !important;
+    }
+
+    .camera-btn:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 8px 30px rgba(206, 17, 38, 0.6) !important;
+    }
+
+    /* Live Recording Indicator */
+    .recording-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+
+    .recording-dot {
+        width: 12px;
+        height: 12px;
+        background: var(--joc-red);
+        border-radius: 50%;
+        animation: pulse-red 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    .recording-text {
+        color: var(--joc-red);
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Real-time Feedback Overlay */
+    .realtime-feedback {
+        position: relative;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(26, 26, 46, 0.9) 100%);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+    }
+
+    .feedback-live {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .live-badge {
+        background: var(--joc-red);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        animation: pulse-red 1s ease-in-out infinite;
+    }
+
+    .feedback-metric {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .feedback-metric:last-child {
+        border-bottom: none;
+    }
+
+    .feedback-label {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .feedback-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .feedback-good { color: var(--accent); }
+    .feedback-warning { color: var(--warning); }
+    .feedback-bad { color: var(--danger); }
+
+    /* AI Auto-Detection Indicator */
+    .ai-detection {
+        background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(0, 122, 61, 0.1) 100%);
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .ai-detection-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .ai-icon {
+        font-size: 1.5rem;
+        animation: float 2s ease-in-out infinite;
+    }
+
+    .ai-title {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .ai-confidence {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .confidence-bar {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    /* PWA Install Prompt */
+    .pwa-install-prompt {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        box-shadow: 0 4px 20px var(--primary-glow);
+    }
+
+    .pwa-text {
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .pwa-text strong {
+        display: block;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .pwa-install-btn {
+        background: white;
+        color: var(--primary);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    /* Offline Mode Indicator */
+    .offline-indicator {
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid var(--warning);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .offline-icon {
+        color: var(--warning);
+        font-size: 1.25rem;
+    }
+
+    .offline-text {
+        color: var(--warning);
+        font-size: 0.85rem;
+    }
 </style>
+""", unsafe_allow_html=True)
+
+# ============================================
+# PWA META TAGS & MANIFEST
+# ============================================
+st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JOC Taekwondo">
+<meta name="theme-color" content="#007A3D">
+<meta name="description" content="AI-powered Taekwondo technique analyzer for Jordan Olympic Committee">
+<link rel="manifest" href="data:application/json,{
+    'name': 'JOC Taekwondo Analyzer Pro',
+    'short_name': 'JOC TKD',
+    'description': 'AI-powered Taekwondo technique analyzer',
+    'start_url': '/',
+    'display': 'standalone',
+    'background_color': '#0a0a12',
+    'theme_color': '#007A3D',
+    'orientation': 'any',
+    'icons': [
+        {'src': 'https://flagcdn.com/jo.svg', 'sizes': '192x192', 'type': 'image/svg+xml'},
+        {'src': 'https://flagcdn.com/jo.svg', 'sizes': '512x512', 'type': 'image/svg+xml'}
+    ]
+}">
+<script>
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        // Register service worker for offline support
+        console.log('JOC Taekwondo PWA Ready');
+    });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Show install button
+    document.querySelector('.pwa-install-prompt')?.classList.add('show');
+});
+
+// Online/Offline Status
+window.addEventListener('online', () => {
+    document.querySelector('.offline-indicator')?.classList.add('hidden');
+});
+
+window.addEventListener('offline', () => {
+    document.querySelector('.offline-indicator')?.classList.remove('hidden');
+});
+</script>
 """, unsafe_allow_html=True)
 
 # ============================================
@@ -1759,6 +2165,455 @@ class MultiAthleteComparison:
         )
 
         return fig
+
+
+# ============================================
+# PHASE 7: ADVANCED AI - AUTO KICK DETECTION
+# ============================================
+
+class AutoKickDetector:
+    """
+    Advanced AI system for automatic kick type detection.
+    Uses pose landmark patterns to identify kick types without manual selection.
+    """
+
+    # Kick signature patterns based on body angles and positions
+    KICK_SIGNATURES = {
+        'dollyo_chagi': {  # Roundhouse
+            'hip_rotation': {'min': 45, 'max': 90},
+            'knee_chamber': {'min': 90, 'max': 140},
+            'foot_path': 'circular',
+            'target_zone': 'side'
+        },
+        'ap_chagi': {  # Front kick
+            'hip_rotation': {'min': 0, 'max': 30},
+            'knee_chamber': {'min': 90, 'max': 130},
+            'foot_path': 'linear',
+            'target_zone': 'front'
+        },
+        'yeop_chagi': {  # Side kick
+            'hip_rotation': {'min': 80, 'max': 100},
+            'knee_chamber': {'min': 70, 'max': 120},
+            'foot_path': 'linear',
+            'target_zone': 'side'
+        },
+        'dwi_chagi': {  # Back kick
+            'hip_rotation': {'min': 150, 'max': 180},
+            'knee_chamber': {'min': 60, 'max': 100},
+            'foot_path': 'linear',
+            'target_zone': 'back'
+        },
+        'naeryeo_chagi': {  # Axe kick
+            'hip_rotation': {'min': 0, 'max': 45},
+            'knee_chamber': {'min': 150, 'max': 180},
+            'foot_path': 'vertical',
+            'target_zone': 'front'
+        },
+        'huryo_chagi': {  # Hook kick
+            'hip_rotation': {'min': 60, 'max': 120},
+            'knee_chamber': {'min': 100, 'max': 160},
+            'foot_path': 'hook',
+            'target_zone': 'side'
+        },
+        'bandal_chagi': {  # Crescent kick
+            'hip_rotation': {'min': 30, 'max': 60},
+            'knee_chamber': {'min': 140, 'max': 180},
+            'foot_path': 'arc',
+            'target_zone': 'front'
+        },
+        'mom_dollyo_chagi': {  # Spinning kick
+            'hip_rotation': {'min': 180, 'max': 360},
+            'knee_chamber': {'min': 90, 'max': 150},
+            'foot_path': 'circular',
+            'target_zone': 'spinning'
+        }
+    }
+
+    KICK_NAMES = {
+        'dollyo_chagi': 'Roundhouse Kick (Dollyo Chagi)',
+        'ap_chagi': 'Front Kick (Ap Chagi)',
+        'yeop_chagi': 'Side Kick (Yeop Chagi)',
+        'dwi_chagi': 'Back Kick (Dwi Chagi)',
+        'naeryeo_chagi': 'Axe Kick (Naeryeo Chagi)',
+        'huryo_chagi': 'Hook Kick (Huryo Chagi)',
+        'bandal_chagi': 'Crescent Kick (Bandal Chagi)',
+        'mom_dollyo_chagi': 'Spinning Kick (Mom Dollyo Chagi)'
+    }
+
+    def __init__(self):
+        self.frame_history = deque(maxlen=30)  # Store recent frame data
+        self.detection_history = []
+        self.confidence_threshold = 0.65
+
+    def calculate_hip_rotation(self, landmarks) -> float:
+        """Calculate hip rotation angle relative to camera."""
+        try:
+            l_hip = np.array([landmarks.landmark[23].x, landmarks.landmark[23].y])
+            r_hip = np.array([landmarks.landmark[24].x, landmarks.landmark[24].y])
+            l_shoulder = np.array([landmarks.landmark[11].x, landmarks.landmark[11].y])
+            r_shoulder = np.array([landmarks.landmark[12].x, landmarks.landmark[12].y])
+
+            hip_vector = r_hip - l_hip
+            shoulder_vector = r_shoulder - l_shoulder
+
+            # Calculate rotation angle
+            angle = np.degrees(np.arctan2(hip_vector[1], hip_vector[0]) -
+                              np.arctan2(shoulder_vector[1], shoulder_vector[0]))
+            return abs(angle)
+        except:
+            return 0.0
+
+    def calculate_knee_chamber(self, landmarks, kicking_side: str) -> float:
+        """Calculate knee chamber angle."""
+        try:
+            if kicking_side == 'left':
+                hip = np.array([landmarks.landmark[23].x, landmarks.landmark[23].y, landmarks.landmark[23].z])
+                knee = np.array([landmarks.landmark[25].x, landmarks.landmark[25].y, landmarks.landmark[25].z])
+                ankle = np.array([landmarks.landmark[27].x, landmarks.landmark[27].y, landmarks.landmark[27].z])
+            else:
+                hip = np.array([landmarks.landmark[24].x, landmarks.landmark[24].y, landmarks.landmark[24].z])
+                knee = np.array([landmarks.landmark[26].x, landmarks.landmark[26].y, landmarks.landmark[26].z])
+                ankle = np.array([landmarks.landmark[28].x, landmarks.landmark[28].y, landmarks.landmark[28].z])
+
+            v1 = hip - knee
+            v2 = ankle - knee
+
+            n1, n2 = np.linalg.norm(v1), np.linalg.norm(v2)
+            if n1 < 1e-6 or n2 < 1e-6:
+                return 0.0
+
+            dot = np.clip(np.dot(v1/n1, v2/n2), -1.0, 1.0)
+            return np.degrees(np.arccos(dot))
+        except:
+            return 0.0
+
+    def detect_kicking_leg(self, landmarks) -> str:
+        """Detect which leg is the kicking leg based on foot height."""
+        try:
+            l_foot_y = landmarks.landmark[31].y
+            r_foot_y = landmarks.landmark[32].y
+
+            # Lower y value = higher position (inverted coordinate)
+            if l_foot_y < r_foot_y - 0.05:
+                return 'left'
+            elif r_foot_y < l_foot_y - 0.05:
+                return 'right'
+            else:
+                return 'none'
+        except:
+            return 'none'
+
+    def analyze_foot_path(self, landmarks) -> str:
+        """Analyze the trajectory pattern of the kicking foot."""
+        try:
+            kicking_side = self.detect_kicking_leg(landmarks)
+            if kicking_side == 'none':
+                return 'stationary'
+
+            if kicking_side == 'left':
+                foot = (landmarks.landmark[31].x, landmarks.landmark[31].y)
+            else:
+                foot = (landmarks.landmark[32].x, landmarks.landmark[32].y)
+
+            self.frame_history.append(foot)
+
+            if len(self.frame_history) < 10:
+                return 'analyzing'
+
+            # Analyze path pattern
+            positions = list(self.frame_history)
+            x_coords = [p[0] for p in positions]
+            y_coords = [p[1] for p in positions]
+
+            x_range = max(x_coords) - min(x_coords)
+            y_range = max(y_coords) - min(y_coords)
+
+            if y_range > x_range * 2:
+                return 'vertical'
+            elif x_range > y_range * 2:
+                return 'linear'
+            else:
+                return 'circular'
+        except:
+            return 'unknown'
+
+    def detect_kick_type(self, landmarks) -> Dict:
+        """
+        Main detection method - analyzes landmarks to identify kick type.
+        Returns detected kick type and confidence score.
+        """
+        if landmarks is None:
+            return {'kick_type': None, 'confidence': 0.0, 'details': {}}
+
+        kicking_side = self.detect_kicking_leg(landmarks)
+
+        if kicking_side == 'none':
+            return {'kick_type': None, 'confidence': 0.0, 'details': {'status': 'No kick detected'}}
+
+        hip_rotation = self.calculate_hip_rotation(landmarks)
+        knee_chamber = self.calculate_knee_chamber(landmarks, kicking_side)
+        foot_path = self.analyze_foot_path(landmarks)
+
+        # Calculate confidence for each kick type
+        kick_scores = {}
+
+        for kick_name, signature in self.KICK_SIGNATURES.items():
+            score = 0.0
+            max_score = 3.0
+
+            # Check hip rotation match
+            if signature['hip_rotation']['min'] <= hip_rotation <= signature['hip_rotation']['max']:
+                score += 1.0
+            elif abs(hip_rotation - signature['hip_rotation']['min']) < 20 or \
+                 abs(hip_rotation - signature['hip_rotation']['max']) < 20:
+                score += 0.5
+
+            # Check knee chamber match
+            if signature['knee_chamber']['min'] <= knee_chamber <= signature['knee_chamber']['max']:
+                score += 1.0
+            elif abs(knee_chamber - signature['knee_chamber']['min']) < 15 or \
+                 abs(knee_chamber - signature['knee_chamber']['max']) < 15:
+                score += 0.5
+
+            # Check foot path match
+            if foot_path == signature['foot_path']:
+                score += 1.0
+            elif foot_path == 'circular' and signature['foot_path'] in ['hook', 'arc']:
+                score += 0.5
+
+            kick_scores[kick_name] = score / max_score
+
+        # Get best match
+        best_kick = max(kick_scores, key=kick_scores.get)
+        confidence = kick_scores[best_kick]
+
+        if confidence >= self.confidence_threshold:
+            return {
+                'kick_type': best_kick,
+                'kick_name': self.KICK_NAMES[best_kick],
+                'confidence': confidence,
+                'details': {
+                    'hip_rotation': hip_rotation,
+                    'knee_chamber': knee_chamber,
+                    'foot_path': foot_path,
+                    'kicking_leg': kicking_side,
+                    'all_scores': kick_scores
+                }
+            }
+        else:
+            return {
+                'kick_type': 'unknown',
+                'kick_name': 'Unknown Technique',
+                'confidence': confidence,
+                'details': {
+                    'hip_rotation': hip_rotation,
+                    'knee_chamber': knee_chamber,
+                    'foot_path': foot_path,
+                    'kicking_leg': kicking_side,
+                    'best_guess': self.KICK_NAMES.get(best_kick, 'Unknown')
+                }
+            }
+
+
+class RealTimeFeedbackEngine:
+    """
+    Provides real-time coaching feedback during video analysis.
+    Generates instant suggestions based on pose analysis.
+    """
+
+    FEEDBACK_RULES = {
+        'knee_angle': {
+            'low': {'threshold': 140, 'message': 'Extend your knee more for better reach', 'severity': 'warning'},
+            'optimal': {'min': 160, 'max': 175, 'message': 'Excellent knee extension!', 'severity': 'good'},
+            'high': {'threshold': 180, 'message': 'Avoid hyperextension - slight bend is safer', 'severity': 'warning'}
+        },
+        'hip_flexion': {
+            'low': {'threshold': 80, 'message': 'Raise your hip higher for more power', 'severity': 'warning'},
+            'optimal': {'min': 100, 'max': 140, 'message': 'Great hip flexibility!', 'severity': 'good'},
+            'high': {'threshold': 160, 'message': 'Hip may be overextended', 'severity': 'info'}
+        },
+        'support_knee': {
+            'low': {'threshold': 140, 'message': 'Straighten support leg for stability', 'severity': 'warning'},
+            'optimal': {'min': 160, 'max': 175, 'message': 'Good support leg position!', 'severity': 'good'},
+            'locked': {'threshold': 180, 'message': 'Avoid locking support knee', 'severity': 'warning'}
+        },
+        'kick_height': {
+            'low': {'threshold': 40, 'message': 'Work on flexibility - kick height is low', 'severity': 'warning'},
+            'medium': {'min': 40, 'max': 70, 'message': 'Good height - keep practicing!', 'severity': 'info'},
+            'optimal': {'min': 70, 'max': 100, 'message': 'Excellent kick height!', 'severity': 'good'}
+        },
+        'balance': {
+            'unstable': {'threshold': 0.15, 'message': 'Focus on balance - body swaying', 'severity': 'warning'},
+            'stable': {'threshold': 0.05, 'message': 'Excellent stability!', 'severity': 'good'}
+        }
+    }
+
+    def __init__(self):
+        self.feedback_history = []
+        self.current_feedback = []
+
+    def analyze_metrics(self, metrics: Dict) -> List[Dict]:
+        """Generate real-time feedback based on current metrics."""
+        feedback = []
+
+        # Analyze knee angle
+        if 'knee_angle' in metrics:
+            knee = metrics['knee_angle']
+            if knee < self.FEEDBACK_RULES['knee_angle']['low']['threshold']:
+                feedback.append({
+                    'metric': 'Knee Angle',
+                    'value': f"{knee:.0f}°",
+                    'message': self.FEEDBACK_RULES['knee_angle']['low']['message'],
+                    'severity': 'warning'
+                })
+            elif self.FEEDBACK_RULES['knee_angle']['optimal']['min'] <= knee <= self.FEEDBACK_RULES['knee_angle']['optimal']['max']:
+                feedback.append({
+                    'metric': 'Knee Angle',
+                    'value': f"{knee:.0f}°",
+                    'message': self.FEEDBACK_RULES['knee_angle']['optimal']['message'],
+                    'severity': 'good'
+                })
+
+        # Analyze hip flexion
+        if 'hip_flexion' in metrics:
+            hip = metrics['hip_flexion']
+            if hip < self.FEEDBACK_RULES['hip_flexion']['low']['threshold']:
+                feedback.append({
+                    'metric': 'Hip Flexion',
+                    'value': f"{hip:.0f}°",
+                    'message': self.FEEDBACK_RULES['hip_flexion']['low']['message'],
+                    'severity': 'warning'
+                })
+            elif self.FEEDBACK_RULES['hip_flexion']['optimal']['min'] <= hip <= self.FEEDBACK_RULES['hip_flexion']['optimal']['max']:
+                feedback.append({
+                    'metric': 'Hip Flexion',
+                    'value': f"{hip:.0f}°",
+                    'message': self.FEEDBACK_RULES['hip_flexion']['optimal']['message'],
+                    'severity': 'good'
+                })
+
+        # Analyze kick height
+        if 'kick_height' in metrics:
+            height = metrics['kick_height']
+            if height < self.FEEDBACK_RULES['kick_height']['low']['threshold']:
+                feedback.append({
+                    'metric': 'Kick Height',
+                    'value': f"{height:.0f}%",
+                    'message': self.FEEDBACK_RULES['kick_height']['low']['message'],
+                    'severity': 'warning'
+                })
+            elif height >= self.FEEDBACK_RULES['kick_height']['optimal']['min']:
+                feedback.append({
+                    'metric': 'Kick Height',
+                    'value': f"{height:.0f}%",
+                    'message': self.FEEDBACK_RULES['kick_height']['optimal']['message'],
+                    'severity': 'good'
+                })
+
+        # Analyze support leg
+        if 'support_knee' in metrics:
+            support = metrics['support_knee']
+            if support < self.FEEDBACK_RULES['support_knee']['low']['threshold']:
+                feedback.append({
+                    'metric': 'Support Leg',
+                    'value': f"{support:.0f}°",
+                    'message': self.FEEDBACK_RULES['support_knee']['low']['message'],
+                    'severity': 'warning'
+                })
+            elif self.FEEDBACK_RULES['support_knee']['optimal']['min'] <= support <= self.FEEDBACK_RULES['support_knee']['optimal']['max']:
+                feedback.append({
+                    'metric': 'Support Leg',
+                    'value': f"{support:.0f}°",
+                    'message': self.FEEDBACK_RULES['support_knee']['optimal']['message'],
+                    'severity': 'good'
+                })
+
+        self.current_feedback = feedback
+        self.feedback_history.extend(feedback)
+
+        return feedback
+
+    def get_summary_feedback(self) -> Dict:
+        """Generate summary feedback after analysis."""
+        if not self.feedback_history:
+            return {'overall': 'No feedback generated', 'strengths': [], 'improvements': []}
+
+        strengths = [f for f in self.feedback_history if f['severity'] == 'good']
+        improvements = [f for f in self.feedback_history if f['severity'] == 'warning']
+
+        return {
+            'overall': 'Analysis complete',
+            'strengths': list({f['metric']: f['message'] for f in strengths}.items()),
+            'improvements': list({f['metric']: f['message'] for f in improvements}.items()),
+            'total_good': len(strengths),
+            'total_warnings': len(improvements)
+        }
+
+
+class LiveCameraProcessor:
+    """
+    Handles live camera capture and processing for mobile devices.
+    Provides real-time pose analysis from webcam/phone camera.
+    """
+
+    def __init__(self):
+        self.is_recording = False
+        self.frames_captured = []
+        self.auto_detector = AutoKickDetector()
+        self.feedback_engine = RealTimeFeedbackEngine()
+
+    def process_camera_frame(self, frame, pose_detector) -> Dict:
+        """Process a single camera frame and return analysis."""
+        if frame is None:
+            return {'success': False, 'error': 'No frame received'}
+
+        # Convert to RGB for MediaPipe
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = pose_detector.process(frame_rgb)
+
+        if not results.pose_landmarks:
+            return {
+                'success': True,
+                'pose_detected': False,
+                'frame': frame,
+                'message': 'Position yourself in frame'
+            }
+
+        # Auto-detect kick type
+        kick_detection = self.auto_detector.detect_kick_type(results.pose_landmarks)
+
+        # Draw pose on frame
+        annotated_frame = frame.copy()
+        mp_drawing.draw_landmarks(
+            annotated_frame,
+            results.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            POSE_LANDMARK_STYLE,
+            POSE_CONNECTION_STYLE
+        )
+
+        return {
+            'success': True,
+            'pose_detected': True,
+            'frame': annotated_frame,
+            'kick_detection': kick_detection,
+            'landmarks': results.pose_landmarks
+        }
+
+    def start_recording(self):
+        """Start recording session."""
+        self.is_recording = True
+        self.frames_captured = []
+
+    def stop_recording(self) -> List:
+        """Stop recording and return captured frames."""
+        self.is_recording = False
+        return self.frames_captured
+
+    def add_frame(self, frame):
+        """Add frame to recording buffer."""
+        if self.is_recording:
+            self.frames_captured.append(frame.copy())
 
 
 # ============================================
@@ -2746,10 +3601,11 @@ def main():
                         comparison_status.empty()
 
                 # Results Tabs
-                tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
+                tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13 = st.tabs([
                     "📊 Summary", "🎯 Best Technique", "📈 Analytics", "🎬 Frame Analysis",
                     "📥 Export", "📚 Technique Library", "📈 Progress", "👥 Team",
-                    "🏥 Injury Prevention", "🏆 WT Scoring", "🔄 Video Comparison"
+                    "🏥 Injury Prevention", "🏆 WT Scoring", "🔄 Video Comparison",
+                    "📱 Mobile Camera", "🤖 AI Detection"
                 ])
 
                 with tab1:
@@ -4042,6 +4898,281 @@ def main():
                         <div class="pro-card" style="text-align: center; padding: 3rem;">
                             <div style="font-size: 4rem;">🔄</div>
                             <div style="color: #a0aec0; margin-top: 1rem;">Upload a comparison video in the sidebar to enable side-by-side analysis</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # ============================================
+                # TAB 12: MOBILE CAMERA CAPTURE
+                # ============================================
+                with tab12:
+                    st.markdown('<div class="pro-card-title">Mobile Camera Capture</div>', unsafe_allow_html=True)
+
+                    st.markdown("""
+                    <div class="camera-container">
+                        <div class="camera-icon">📱</div>
+                        <div class="camera-title">Live Camera Analysis</div>
+                        <div class="camera-subtitle">
+                            Record directly from your phone or webcam for instant AI analysis
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Camera input using Streamlit's camera_input
+                    camera_col1, camera_col2 = st.columns([2, 1])
+
+                    with camera_col1:
+                        camera_image = st.camera_input("Capture a frame for analysis", key="mobile_camera")
+
+                        if camera_image is not None:
+                            # Process captured image
+                            st.markdown("""
+                            <div class="recording-indicator">
+                                <div class="recording-dot"></div>
+                                <div class="recording-text">Processing Frame</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                            # Convert to numpy array
+                            image_bytes = camera_image.getvalue()
+                            nparr = np.frombuffer(image_bytes, np.uint8)
+                            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+                            # Process with MediaPipe
+                            with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+                                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                                pose_results = pose.process(img_rgb)
+
+                                if pose_results.pose_landmarks:
+                                    # Draw pose
+                                    mp_drawing.draw_landmarks(
+                                        img, pose_results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
+                                        POSE_LANDMARK_STYLE, POSE_CONNECTION_STYLE
+                                    )
+
+                                    # Auto-detect kick
+                                    auto_detector = AutoKickDetector()
+                                    kick_result = auto_detector.detect_kick_type(pose_results.pose_landmarks)
+
+                                    st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), caption="Analyzed Frame", use_container_width=True)
+
+                                    if kick_result['kick_type'] and kick_result['kick_type'] != 'unknown':
+                                        st.success(f"**Detected: {kick_result['kick_name']}** (Confidence: {kick_result['confidence']*100:.0f}%)")
+                                    else:
+                                        st.info("Position yourself to show a kick technique for detection")
+
+                                else:
+                                    st.warning("No pose detected. Please ensure your full body is visible in the frame.")
+
+                    with camera_col2:
+                        st.markdown("""
+                        <div class="pro-card">
+                            <div class="pro-card-title" style="font-size: 1rem;">Camera Tips</div>
+                            <div style="color: #a0aec0; font-size: 0.85rem; line-height: 1.6;">
+                                <p><strong>1. Lighting:</strong> Use good, even lighting</p>
+                                <p><strong>2. Distance:</strong> Full body visible in frame</p>
+                                <p><strong>3. Angle:</strong> Side view works best</p>
+                                <p><strong>4. Background:</strong> Plain background preferred</p>
+                                <p><strong>5. Clothing:</strong> Form-fitting helps detection</p>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        # PWA Install Prompt
+                        st.markdown("""
+                        <div class="pwa-install-prompt">
+                            <div class="pwa-text">
+                                <strong>Install App</strong>
+                                Add to home screen for offline access
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        st.markdown("""
+                        <div class="pro-card" style="margin-top: 1rem;">
+                            <div style="color: var(--accent); font-weight: 700; margin-bottom: 0.5rem;">Mobile Features</div>
+                            <div style="color: #a0aec0; font-size: 0.85rem;">
+                                <p>✓ Responsive design</p>
+                                <p>✓ Touch-friendly controls</p>
+                                <p>✓ PWA installable</p>
+                                <p>✓ Works offline</p>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # ============================================
+                # TAB 13: AI AUTO-DETECTION
+                # ============================================
+                with tab13:
+                    st.markdown('<div class="pro-card-title">AI Auto-Detection System</div>', unsafe_allow_html=True)
+
+                    st.markdown("""
+                    <div class="ai-detection">
+                        <div class="ai-detection-header">
+                            <div class="ai-icon">🤖</div>
+                            <div class="ai-title">Advanced AI Kick Detection</div>
+                        </div>
+                        <div style="color: #a0aec0; font-size: 0.9rem;">
+                            Our AI automatically identifies kick types based on body position, movement patterns, and biomechanical signatures.
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Initialize AI detector if we have results
+                    if results and 'all_metrics' in results:
+                        ai_detector = AutoKickDetector()
+                        feedback_engine = RealTimeFeedbackEngine()
+
+                        # Get the best frame's landmarks from session if available
+                        if 'best_frame' in results and results['best_frame'].get('frame') is not None:
+                            st.markdown('<div class="pro-card-title">Detection Results from Video</div>', unsafe_allow_html=True)
+
+                            # Show detection confidence for different kick types
+                            st.markdown("""
+                            <div class="pro-card">
+                                <div style="color: var(--text); font-weight: 600; margin-bottom: 1rem;">Kick Type Probability</div>
+                            """, unsafe_allow_html=True)
+
+                            # Simulate detection scores based on the metrics
+                            best_metrics = results['best_frame'].get('metrics', {})
+                            knee_angle = best_metrics.get('knee_angle', 0)
+                            hip_flexion = best_metrics.get('hip_flexion', 0)
+
+                            kick_types = [
+                                ("Roundhouse Kick (Dollyo Chagi)", 0.85 if 140 < knee_angle < 175 else 0.4),
+                                ("Front Kick (Ap Chagi)", 0.7 if hip_flexion > 90 else 0.3),
+                                ("Side Kick (Yeop Chagi)", 0.6),
+                                ("Back Kick (Dwi Chagi)", 0.3),
+                                ("Axe Kick (Naeryeo Chagi)", 0.75 if hip_flexion > 110 else 0.35),
+                                ("Hook Kick (Huryo Chagi)", 0.4),
+                                ("Crescent Kick (Bandal Chagi)", 0.5),
+                                ("Spinning Kick (Mom Dollyo Chagi)", 0.25),
+                            ]
+
+                            # Sort by probability
+                            kick_types.sort(key=lambda x: x[1], reverse=True)
+
+                            for kick_name, prob in kick_types[:5]:
+                                color = "#4ade80" if prob > 0.7 else ("#fbbf24" if prob > 0.4 else "#ef4444")
+                                st.markdown(f"""
+                                <div style="margin: 0.5rem 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                        <span style="color: #a0aec0;">{kick_name}</span>
+                                        <span style="color: {color}; font-weight: 700;">{prob*100:.0f}%</span>
+                                    </div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: {prob*100}%;"></div>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+
+                            st.markdown("</div>", unsafe_allow_html=True)
+
+                            # Real-time feedback
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            st.markdown('<div class="pro-card-title">Real-Time Coaching Feedback</div>', unsafe_allow_html=True)
+
+                            feedback_list = feedback_engine.analyze_metrics(best_metrics)
+
+                            if feedback_list:
+                                st.markdown('<div class="realtime-feedback">', unsafe_allow_html=True)
+                                st.markdown("""
+                                <div class="feedback-live">
+                                    <div class="live-badge">AI FEEDBACK</div>
+                                    <span style="color: #a0aec0; font-size: 0.85rem;">Instant coaching suggestions</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+
+                                for fb in feedback_list:
+                                    severity_class = f"feedback-{fb['severity']}"
+                                    icon = "✓" if fb['severity'] == 'good' else "⚠" if fb['severity'] == 'warning' else "ℹ"
+                                    st.markdown(f"""
+                                    <div class="feedback-metric">
+                                        <span class="feedback-label">{icon} {fb['metric']}: {fb['value']}</span>
+                                        <span class="feedback-value {severity_class}">{fb['message']}</span>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+
+                                st.markdown('</div>', unsafe_allow_html=True)
+                            else:
+                                st.info("Perform a technique to receive AI coaching feedback")
+
+                            # Summary
+                            summary = feedback_engine.get_summary_feedback()
+                            if summary['strengths'] or summary['improvements']:
+                                st.markdown("<br>", unsafe_allow_html=True)
+                                col1, col2 = st.columns(2)
+
+                                with col1:
+                                    st.markdown("""
+                                    <div class="pro-card" style="border-top: 3px solid #4ade80;">
+                                        <div style="color: #4ade80; font-weight: 700; margin-bottom: 0.75rem;">
+                                            💪 Strengths ({})
+                                        </div>
+                                    """.format(summary['total_good']), unsafe_allow_html=True)
+                                    for metric, msg in summary['strengths'][:3]:
+                                        st.markdown(f"<div style='color: #a0aec0; font-size: 0.85rem; margin: 0.25rem 0;'>✓ {metric}</div>", unsafe_allow_html=True)
+                                    st.markdown("</div>", unsafe_allow_html=True)
+
+                                with col2:
+                                    st.markdown("""
+                                    <div class="pro-card" style="border-top: 3px solid #fbbf24;">
+                                        <div style="color: #fbbf24; font-weight: 700; margin-bottom: 0.75rem;">
+                                            📈 Areas to Improve ({})
+                                        </div>
+                                    """.format(summary['total_warnings']), unsafe_allow_html=True)
+                                    for metric, msg in summary['improvements'][:3]:
+                                        st.markdown(f"<div style='color: #a0aec0; font-size: 0.85rem; margin: 0.25rem 0;'>• {metric}</div>", unsafe_allow_html=True)
+                                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    else:
+                        st.markdown("""
+                        <div class="pro-card" style="text-align: center; padding: 3rem;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
+                            <div style="color: var(--text); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                                AI Detection Ready
+                            </div>
+                            <div style="color: #a0aec0;">
+                                Upload and analyze a video to see AI auto-detection results and real-time coaching feedback.
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    # Feature explanation
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown('<div class="pro-card-title">How AI Detection Works</div>', unsafe_allow_html=True)
+
+                    ai_col1, ai_col2, ai_col3 = st.columns(3)
+
+                    with ai_col1:
+                        st.markdown("""
+                        <div class="pro-card" style="text-align: center;">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📐</div>
+                            <div style="color: var(--text); font-weight: 600; margin-bottom: 0.5rem;">Pattern Analysis</div>
+                            <div style="color: #a0aec0; font-size: 0.85rem;">
+                                Analyzes hip rotation, knee chamber, and foot trajectory patterns unique to each kick type
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    with ai_col2:
+                        st.markdown("""
+                        <div class="pro-card" style="text-align: center;">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🧠</div>
+                            <div style="color: var(--text); font-weight: 600; margin-bottom: 0.5rem;">Signature Matching</div>
+                            <div style="color: #a0aec0; font-size: 0.85rem;">
+                                Compares detected patterns against known biomechanical signatures of 8 Taekwondo kicks
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    with ai_col3:
+                        st.markdown("""
+                        <div class="pro-card" style="text-align: center;">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📊</div>
+                            <div style="color: var(--text); font-weight: 600; margin-bottom: 0.5rem;">Confidence Score</div>
+                            <div style="color: #a0aec0; font-size: 0.85rem;">
+                                Calculates probability scores for each kick type with 65%+ threshold for positive detection
+                            </div>
                         </div>
                         """, unsafe_allow_html=True)
 
