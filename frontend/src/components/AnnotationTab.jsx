@@ -1,38 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Plus, Trash2, Edit, Check, X, MessageSquare, Clock } from 'lucide-react';
+import { Target, Plus, Trash2, Edit, Check, X, MessageSquare, Clock, PenTool } from 'lucide-react';
 
-const AnnotationTab = ({ analysisData }) => {
-  const [annotations, setAnnotations] = useState([
-    {
-      id: 1,
-      frame: 15,
-      time: '0:00.5',
-      type: 'technique',
-      title: 'Excellent Chamber',
-      content: 'Perfect knee lift height and hip positioning during chamber phase.',
-      color: '#10B981',
-    },
-    {
-      id: 2,
-      frame: 25,
-      time: '0:00.8',
-      type: 'correction',
-      title: 'Support Leg Bend',
-      content: 'Support leg showing slight bend - focus on maintaining straight leg for better balance.',
-      color: '#F59E0B',
-    },
-    {
-      id: 3,
-      frame: 35,
-      time: '0:01.2',
-      type: 'highlight',
-      title: 'Peak Extension',
-      content: 'Maximum kick height achieved with good form. Hip rotation engaged.',
-      color: '#3B82F6',
-    },
-  ]);
-
+const AnnotationTab = ({ analysisData, annotations, setAnnotations }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [newAnnotation, setNewAnnotation] = useState({
@@ -49,21 +19,22 @@ const AnnotationTab = ({ analysisData }) => {
     { id: 'question', name: 'Question', color: '#8B5CF6', icon: '?' },
   ];
 
+  // Use real annotations only
+  const hasAnnotations = annotations && annotations.length > 0;
+
   const handleAddAnnotation = () => {
     if (newAnnotation.title && newAnnotation.frame) {
       const type = annotationTypes.find(t => t.id === newAnnotation.type);
-      setAnnotations([
-        ...annotations,
-        {
-          id: Date.now(),
-          frame: parseInt(newAnnotation.frame),
-          time: `0:${(parseInt(newAnnotation.frame) / 30).toFixed(2)}`,
-          type: newAnnotation.type,
-          title: newAnnotation.title,
-          content: newAnnotation.content,
-          color: type?.color || '#D4AF37',
-        },
-      ]);
+      const newEntry = {
+        id: Date.now(),
+        frame: parseInt(newAnnotation.frame),
+        time: `0:${(parseInt(newAnnotation.frame) / 30).toFixed(2)}`,
+        type: newAnnotation.type,
+        title: newAnnotation.title,
+        content: newAnnotation.content,
+        color: type?.color || '#D4AF37',
+      };
+      setAnnotations([...(annotations || []), newEntry]);
       setNewAnnotation({ frame: '', type: 'technique', title: '', content: '' });
       setShowAddForm(false);
     }
@@ -77,6 +48,32 @@ const AnnotationTab = ({ analysisData }) => {
     setAnnotations(annotations.map(a =>
       a.id === id ? { ...a, ...updates } : a
     ));
+  };
+
+  const exportAnnotations = (format) => {
+    if (!hasAnnotations) return;
+
+    if (format === 'json') {
+      const dataStr = JSON.stringify(annotations, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `annotations_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'csv') {
+      const headers = ['Frame', 'Time', 'Type', 'Title', 'Content'];
+      const rows = annotations.map(a => [a.frame, a.time, a.type, a.title, a.content]);
+      const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `annotations_${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -120,15 +117,20 @@ const AnnotationTab = ({ analysisData }) => {
       <div className="glass-card p-4">
         <h3 className="text-lg font-semibold text-white mb-4">Annotations Timeline</h3>
 
-        {annotations.length === 0 ? (
+        {!hasAnnotations ? (
           <div className="text-center py-8 text-gray-400">
-            <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+            <PenTool size={48} className="mx-auto mb-4 opacity-50" />
             <p>No annotations yet</p>
-            <p className="text-sm">Add annotations to mark important moments in the video</p>
+            <p className="text-sm mt-2">Add annotations to mark important moments in the video</p>
+            {!analysisData && (
+              <p className="text-xs text-yellow-400 mt-4">
+                Tip: Analyze a video first to know the frame numbers to annotate
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-            {annotations.sort((a, b) => a.frame - b.frame).map((annotation, idx) => (
+            {[...annotations].sort((a, b) => a.frame - b.frame).map((annotation, idx) => (
               <motion.div
                 key={annotation.id}
                 initial={{ opacity: 0, x: -20 }}
@@ -189,7 +191,7 @@ const AnnotationTab = ({ analysisData }) => {
                                 color: annotation.color,
                               }}
                             >
-                              {annotationTypes.find(t => t.id === annotation.type)?.name}
+                              {annotationTypes.find(t => t.id === annotation.type)?.name || annotation.type}
                             </span>
                             <span className="text-xs text-gray-500 flex items-center gap-1">
                               <Clock size={12} />
@@ -223,12 +225,12 @@ const AnnotationTab = ({ analysisData }) => {
         )}
       </div>
 
-      {/* Frame Summary */}
+      {/* Annotation Summary */}
       <div className="glass-card p-4">
         <h3 className="text-lg font-semibold text-white mb-4">Annotation Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {annotationTypes.map((type) => {
-            const count = annotations.filter(a => a.type === type.id).length;
+            const count = hasAnnotations ? annotations.filter(a => a.type === type.id).length : 0;
             return (
               <div key={type.id} className="metric-card">
                 <div className="text-3xl font-bold" style={{ color: type.color }}>
@@ -266,8 +268,13 @@ const AnnotationTab = ({ analysisData }) => {
                   value={newAnnotation.frame}
                   onChange={(e) => setNewAnnotation({ ...newAnnotation, frame: e.target.value })}
                   className="w-full"
-                  placeholder="e.g., 25"
+                  placeholder={analysisData ? `1 - ${analysisData.frames || 100}` : 'e.g., 25'}
                 />
+                {analysisData && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Video has {analysisData.frames || 0} frames at {analysisData.fps || 30} FPS
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Annotation Type</label>
@@ -318,15 +325,52 @@ const AnnotationTab = ({ analysisData }) => {
       <div className="glass-card p-4">
         <h3 className="text-lg font-semibold text-white mb-4">Export Annotations</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+          <button
+            onClick={() => exportAnnotations('json')}
+            disabled={!hasAnnotations}
+            className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Export as JSON
           </button>
-          <button className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+          <button
+            onClick={() => exportAnnotations('csv')}
+            disabled={!hasAnnotations}
+            className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Export as CSV
           </button>
-          <button className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+          <button
+            disabled={!hasAnnotations}
+            className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Include in Report
           </button>
+        </div>
+        {!hasAnnotations && (
+          <p className="text-xs text-gray-500 mt-2">Add annotations to enable export options</p>
+        )}
+      </div>
+
+      {/* Tips */}
+      <div className="glass-card p-4">
+        <h3 className="text-lg font-semibold text-joc-gold mb-4">Annotation Tips</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
+          <div className="flex items-start gap-3">
+            <span className="text-joc-gold">1.</span>
+            <p>Use frame numbers from your analyzed video to mark specific moments</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-joc-gold">2.</span>
+            <p>Mark technique highlights to review good form examples</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-joc-gold">3.</span>
+            <p>Note corrections needed for targeted practice sessions</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-joc-gold">4.</span>
+            <p>Export annotations to share with coaches or for reports</p>
+          </div>
         </div>
       </div>
     </div>

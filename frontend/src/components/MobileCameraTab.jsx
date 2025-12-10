@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Video, StopCircle, RefreshCw, Download, Smartphone, Wifi, WifiOff } from 'lucide-react';
+import { Camera, Video, StopCircle, RefreshCw, Download, Smartphone, Wifi, WifiOff, AlertCircle } from 'lucide-react';
 
 const MobileCameraTab = ({ setAnalysisData }) => {
   const videoRef = useRef(null);
@@ -118,44 +118,6 @@ const MobileCameraTab = ({ setAnalysisData }) => {
     }
   };
 
-  const analyzeCapture = () => {
-    if (capturedImage) {
-      // Simulate analysis
-      const demoAnalysis = {
-        kickType: 'dollyo_chagi',
-        frames: 1,
-        fps: 1,
-        metrics: {
-          kneeAngle: { avg: 145, min: 145, max: 145 },
-          hipFlexion: { avg: 98, min: 98, max: 98 },
-          kickHeight: { avg: 80, min: 80, max: 80 },
-          chamberTime: 0,
-          extensionTime: 0,
-          retractionTime: 0,
-          totalTime: 0,
-          peakVelocity: 0,
-          balanceScore: 82,
-          formScore: 85,
-          powerScore: 0,
-          overallScore: 84,
-        },
-        recommendations: [
-          { type: 'good', message: 'Good knee chamber position' },
-          { type: 'improvement', message: 'Extend hip further for more height' },
-        ],
-        injuryRisk: {
-          overall: 'low',
-          aclRisk: 12,
-          kneeValgus: false,
-          fatigue: 0,
-        }
-      };
-
-      setAnalysisData(demoAnalysis);
-      alert('Image analyzed! Check the Biomechanics tab for results.');
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
@@ -185,8 +147,22 @@ const MobileCameraTab = ({ setAnalysisData }) => {
           <div>
             <h3 className="font-semibold text-blue-400">Mobile Capture</h3>
             <p className="text-sm text-gray-300 mt-1">
-              Use your device's camera to capture technique images or record short videos for analysis.
-              Works best in landscape orientation with good lighting.
+              Use your device's camera to capture technique images or record short videos.
+              Download recordings and upload them in the Video Analyzer tab for full analysis.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Info about analysis */}
+      <div className="glass-card p-4 bg-yellow-500/10 border border-yellow-500/30">
+        <div className="flex items-start gap-3">
+          <AlertCircle size={24} className="text-yellow-400 flex-shrink-0" />
+          <div>
+            <h3 className="font-semibold text-yellow-400">Analysis Note</h3>
+            <p className="text-sm text-gray-300 mt-1">
+              For full biomechanical analysis, record your video here, download it, then upload it in the Video Analyzer tab.
+              Single frame captures provide limited analysis data.
             </p>
           </div>
         </div>
@@ -227,7 +203,7 @@ const MobileCameraTab = ({ setAnalysisData }) => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={startCamera}
+                onClick={() => startCamera()}
                 className="btn-gold flex items-center gap-2"
               >
                 <Camera size={20} />
@@ -295,14 +271,6 @@ const MobileCameraTab = ({ setAnalysisData }) => {
 
           {capturedImage && (
             <div className="flex flex-wrap justify-center gap-4 mt-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={analyzeCapture}
-                className="btn-gold flex items-center gap-2"
-              >
-                Analyze Image
-              </motion.button>
               <button
                 onClick={() => {
                   const a = document.createElement('a');
@@ -310,10 +278,10 @@ const MobileCameraTab = ({ setAnalysisData }) => {
                   a.download = `capture_${Date.now()}.png`;
                   a.click();
                 }}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg flex items-center gap-2 transition-colors"
+                className="btn-gold flex items-center gap-2"
               >
                 <Download size={20} />
-                Download
+                Download Image
               </button>
               <button
                 onClick={() => setCapturedImage(null)}
@@ -334,8 +302,8 @@ const MobileCameraTab = ({ setAnalysisData }) => {
             <div className="flex items-center gap-4">
               <Video size={24} className="text-joc-gold" />
               <div>
-                <p className="font-medium">Video Recording</p>
-                <p className="text-sm text-gray-400">{recordedChunks.length} chunks</p>
+                <p className="font-medium">Video Recording Ready</p>
+                <p className="text-sm text-gray-400">{recordedChunks.length} chunks recorded</p>
               </div>
             </div>
             <button
@@ -343,9 +311,12 @@ const MobileCameraTab = ({ setAnalysisData }) => {
               className="btn-gold flex items-center gap-2"
             >
               <Download size={20} />
-              Download
+              Download Video
             </button>
           </div>
+          <p className="text-sm text-gray-400 mt-2">
+            Download the video and upload it in the Video Analyzer tab for full biomechanical analysis.
+          </p>
         </div>
       )}
 

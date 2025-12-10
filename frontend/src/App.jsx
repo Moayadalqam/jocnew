@@ -43,6 +43,7 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [athletes, setAthletes] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [annotations, setAnnotations] = useState([]);
   const tabsContainerRef = useRef(null);
 
   const scrollTabs = (direction) => {
@@ -81,7 +82,7 @@ function App() {
       case 'team':
         return <TeamTab athletes={athletes} setAthletes={setAthletes} />;
       case 'annotation':
-        return <AnnotationTab analysisData={analysisData} />;
+        return <AnnotationTab analysisData={analysisData} annotations={annotations} setAnnotations={setAnnotations} />;
       case 'history':
         return <SessionHistoryTab sessions={sessions} setSessions={setSessions} />;
       case 'reports':

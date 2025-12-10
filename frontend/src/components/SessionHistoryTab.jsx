@@ -1,115 +1,34 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Calendar, Search, Filter, Eye, Trash2, Download, Clock, TrendingUp } from 'lucide-react';
+import { FileText, Calendar, Search, Filter, Eye, Trash2, Download, Clock, TrendingUp, Video } from 'lucide-react';
 
 const SessionHistoryTab = ({ sessions, setSessions }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('date');
 
-  // Demo session history
-  const demoSessions = [
-    {
-      id: 1,
-      date: '2024-12-08',
-      time: '14:30',
-      athlete: 'Ahmad Al-Hussein',
-      kickType: 'Dollyo Chagi',
-      overallScore: 87,
-      duration: '2:34',
-      frames: 152,
-    },
-    {
-      id: 2,
-      date: '2024-12-07',
-      time: '10:15',
-      athlete: 'Sara Mohammad',
-      kickType: 'Yeop Chagi',
-      overallScore: 82,
-      duration: '1:45',
-      frames: 105,
-    },
-    {
-      id: 3,
-      date: '2024-12-06',
-      time: '16:00',
-      athlete: 'Omar Khalid',
-      kickType: 'Dwi Chagi',
-      overallScore: 91,
-      duration: '3:12',
-      frames: 192,
-    },
-    {
-      id: 4,
-      date: '2024-12-05',
-      time: '09:45',
-      athlete: 'Layla Nasser',
-      kickType: 'Naeryo Chagi',
-      overallScore: 78,
-      duration: '2:05',
-      frames: 125,
-    },
-    {
-      id: 5,
-      date: '2024-12-04',
-      time: '11:30',
-      athlete: 'Yousef Tariq',
-      kickType: 'Mom Dollyo Chagi',
-      overallScore: 94,
-      duration: '2:50',
-      frames: 170,
-    },
-    {
-      id: 6,
-      date: '2024-12-03',
-      time: '15:20',
-      athlete: 'Ahmad Al-Hussein',
-      kickType: 'Bandae Dollyo',
-      overallScore: 85,
-      duration: '2:18',
-      frames: 138,
-    },
-    {
-      id: 7,
-      date: '2024-12-02',
-      time: '14:00',
-      athlete: 'Sara Mohammad',
-      kickType: 'Dollyo Chagi',
-      overallScore: 80,
-      duration: '1:55',
-      frames: 115,
-    },
-    {
-      id: 8,
-      date: '2024-12-01',
-      time: '10:00',
-      athlete: 'Omar Khalid',
-      kickType: 'Dwi Huryeo Chagi',
-      overallScore: 89,
-      duration: '2:40',
-      frames: 160,
-    },
-  ];
+  // Only use real sessions - no demo data
+  const hasSessions = sessions && sessions.length > 0;
 
-  const allSessions = sessions.length > 0 ? sessions : demoSessions;
-
-  const filteredSessions = allSessions
-    .filter(s => {
-      const matchesSearch =
-        s.athlete.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.kickType.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFilter = filterType === 'all' ||
-        (filterType === 'high' && s.overallScore >= 85) ||
-        (filterType === 'medium' && s.overallScore >= 70 && s.overallScore < 85) ||
-        (filterType === 'low' && s.overallScore < 70);
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date') return new Date(b.date) - new Date(a.date);
-      if (sortBy === 'score') return b.overallScore - a.overallScore;
-      if (sortBy === 'athlete') return a.athlete.localeCompare(b.athlete);
-      return 0;
-    });
+  const filteredSessions = hasSessions
+    ? sessions
+        .filter(s => {
+          const matchesSearch =
+            (s.athlete && s.athlete.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (s.kickType && s.kickType.toLowerCase().includes(searchQuery.toLowerCase()));
+          const matchesFilter = filterType === 'all' ||
+            (filterType === 'high' && s.overallScore >= 85) ||
+            (filterType === 'medium' && s.overallScore >= 70 && s.overallScore < 85) ||
+            (filterType === 'low' && s.overallScore < 70);
+          return matchesSearch && matchesFilter;
+        })
+        .sort((a, b) => {
+          if (sortBy === 'date') return new Date(b.date || 0) - new Date(a.date || 0);
+          if (sortBy === 'score') return (b.overallScore || 0) - (a.overallScore || 0);
+          if (sortBy === 'athlete') return (a.athlete || '').localeCompare(b.athlete || '');
+          return 0;
+        })
+    : [];
 
   const getScoreColor = (score) => {
     if (score >= 85) return 'text-green-400';
@@ -125,14 +44,65 @@ const SessionHistoryTab = ({ sessions, setSessions }) => {
 
   const handleDeleteSession = (id) => {
     if (confirm('Are you sure you want to delete this session?')) {
-      setSessions(allSessions.filter(s => s.id !== id));
+      setSessions(sessions.filter(s => s.id !== id));
     }
   };
 
-  // Statistics
-  const avgScore = allSessions.reduce((acc, s) => acc + s.overallScore, 0) / allSessions.length;
-  const highScoreSessions = allSessions.filter(s => s.overallScore >= 85).length;
-  const totalFrames = allSessions.reduce((acc, s) => acc + s.frames, 0);
+  // Empty state when no sessions
+  if (!hasSessions) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-6">
+          <FileText className="text-joc-gold" size={28} />
+          <h2 className="text-2xl font-bold text-white">Session History</h2>
+        </div>
+
+        <div className="glass-card p-8 text-center">
+          <Video size={64} className="mx-auto mb-4 text-gray-500 opacity-50" />
+          <h3 className="text-xl font-semibold text-white mb-2">No Sessions Recorded</h3>
+          <p className="text-gray-400">
+            Analyze videos to build your session history. Each analysis will be saved here.
+          </p>
+        </div>
+
+        {/* How It Works */}
+        <div className="glass-card p-4">
+          <h3 className="text-lg font-semibold text-joc-gold mb-4">How Session History Works</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-white/5 rounded-lg">
+              <div className="text-2xl mb-2">1</div>
+              <h4 className="font-medium text-white mb-2">Analyze Videos</h4>
+              <p className="text-sm text-gray-400">
+                Upload and analyze technique videos in the Video Analyzer tab.
+              </p>
+            </div>
+            <div className="p-4 bg-white/5 rounded-lg">
+              <div className="text-2xl mb-2">2</div>
+              <h4 className="font-medium text-white mb-2">Automatic Logging</h4>
+              <p className="text-sm text-gray-400">
+                Each analysis is automatically saved with date, scores, and kick type.
+              </p>
+            </div>
+            <div className="p-4 bg-white/5 rounded-lg">
+              <div className="text-2xl mb-2">3</div>
+              <h4 className="font-medium text-white mb-2">Review & Compare</h4>
+              <p className="text-sm text-gray-400">
+                Search, filter, and compare sessions to track improvement over time.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate real statistics
+  const avgScore = sessions.reduce((acc, s) => acc + (s.overallScore || 0), 0) / sessions.length;
+  const highScoreSessions = sessions.filter(s => (s.overallScore || 0) >= 85).length;
+  const totalFrames = sessions.reduce((acc, s) => acc + (s.frames || 0), 0);
+
+  // Group sessions by athlete
+  const athleteGroups = [...new Set(sessions.map(s => s.athlete).filter(Boolean))];
 
   return (
     <div className="space-y-6">
@@ -145,7 +115,7 @@ const SessionHistoryTab = ({ sessions, setSessions }) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="metric-card">
           <FileText className="mx-auto mb-2 text-joc-gold" size={24} />
-          <div className="text-3xl font-bold text-joc-gold">{allSessions.length}</div>
+          <div className="text-3xl font-bold text-joc-gold">{sessions.length}</div>
           <div className="text-sm text-gray-400">Total Sessions</div>
         </div>
         <div className="metric-card">
@@ -229,26 +199,26 @@ const SessionHistoryTab = ({ sessions, setSessions }) => {
                 className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getScoreBg(session.overallScore)}`}>
-                    <span className={`text-lg font-bold ${getScoreColor(session.overallScore)}`}>
-                      {session.overallScore}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getScoreBg(session.overallScore || 0)}`}>
+                    <span className={`text-lg font-bold ${getScoreColor(session.overallScore || 0)}`}>
+                      {session.overallScore || 0}
                     </span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white">{session.athlete}</h4>
+                    <h4 className="font-medium text-white">{session.athlete || 'Unknown Athlete'}</h4>
                     <div className="flex items-center gap-4 text-sm text-gray-400">
                       <span className="flex items-center gap-1">
                         <Calendar size={14} />
-                        {session.date} {session.time}
+                        {session.date || 'No date'} {session.time || ''}
                       </span>
-                      <span>{session.kickType}</span>
+                      <span>{session.kickType || 'Unknown kick'}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right text-sm text-gray-400 hidden md:block">
-                    <div>{session.duration}</div>
-                    <div>{session.frames} frames</div>
+                    <div>{session.duration || '-'}</div>
+                    <div>{session.frames || 0} frames</div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -278,33 +248,35 @@ const SessionHistoryTab = ({ sessions, setSessions }) => {
         )}
       </div>
 
-      {/* Recent Activity by Athlete */}
-      <div className="glass-card p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Sessions by Athlete</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...new Set(allSessions.map(s => s.athlete))].map((athlete) => {
-            const athleteSessions = allSessions.filter(s => s.athlete === athlete);
-            const avgAthleteScore = athleteSessions.reduce((acc, s) => acc + s.overallScore, 0) / athleteSessions.length;
-            return (
-              <div key={athlete} className="p-4 bg-white/5 rounded-lg">
-                <div className="font-medium text-white mb-2">{athlete}</div>
-                <div className="flex justify-between text-sm text-gray-400">
-                  <span>{athleteSessions.length} sessions</span>
-                  <span className={getScoreColor(avgAthleteScore)}>
-                    Avg: {avgAthleteScore.toFixed(0)}%
-                  </span>
+      {/* Sessions by Athlete - only if there are athlete groups */}
+      {athleteGroups.length > 0 && (
+        <div className="glass-card p-4">
+          <h3 className="text-lg font-semibold text-white mb-4">Sessions by Athlete</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {athleteGroups.map((athlete) => {
+              const athleteSessions = sessions.filter(s => s.athlete === athlete);
+              const avgAthleteScore = athleteSessions.reduce((acc, s) => acc + (s.overallScore || 0), 0) / athleteSessions.length;
+              return (
+                <div key={athlete} className="p-4 bg-white/5 rounded-lg">
+                  <div className="font-medium text-white mb-2">{athlete}</div>
+                  <div className="flex justify-between text-sm text-gray-400">
+                    <span>{athleteSessions.length} sessions</span>
+                    <span className={getScoreColor(avgAthleteScore)}>
+                      Avg: {avgAthleteScore.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="mt-2 w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-joc-gold rounded-full"
+                      style={{ width: `${avgAthleteScore}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="mt-2 w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-joc-gold rounded-full"
-                    style={{ width: `${avgAthleteScore}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="glass-card p-4">
@@ -319,8 +291,15 @@ const SessionHistoryTab = ({ sessions, setSessions }) => {
           <button className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
             Compare Sessions
           </button>
-          <button className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">
-            Clear Old Sessions
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to clear all sessions?')) {
+                setSessions([]);
+              }
+            }}
+            className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
+          >
+            Clear All Sessions
           </button>
         </div>
       </div>
