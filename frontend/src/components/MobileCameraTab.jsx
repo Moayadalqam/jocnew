@@ -26,11 +26,11 @@ const MobileCameraTab = ({ setAnalysisData }) => {
     };
   }, []);
 
-  const startCamera = async () => {
+  const startCamera = async (facing = cameraFacing) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: cameraFacing,
+          facingMode: facing,
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -58,8 +58,9 @@ const MobileCameraTab = ({ setAnalysisData }) => {
 
   const switchCamera = async () => {
     stopCamera();
-    setCameraFacing(prev => prev === 'environment' ? 'user' : 'environment');
-    setTimeout(startCamera, 100);
+    const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    setCameraFacing(nextFacing);
+    setTimeout(() => startCamera(nextFacing), 100);
   };
 
   const captureImage = () => {

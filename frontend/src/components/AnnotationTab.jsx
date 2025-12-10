@@ -77,7 +77,6 @@ const AnnotationTab = ({ analysisData }) => {
     setAnnotations(annotations.map(a =>
       a.id === id ? { ...a, ...updates } : a
     ));
-    setEditingId(null);
   };
 
   return (
