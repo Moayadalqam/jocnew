@@ -383,7 +383,7 @@ const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, anal
                   </p>
 
                   {/* Steps */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { step: 1, title: 'Analyze Videos', icon: Target },
                       { step: 2, title: 'Build History', icon: BarChart },

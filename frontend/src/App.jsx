@@ -371,7 +371,7 @@ function App() {
           transition={{ delay: 0.6 }}
           className="mt-10 text-center"
         >
-          <div className="inline-flex items-center gap-6 px-8 py-4 rounded-2xl bg-[#0a0a12]/60 backdrop-blur-xl border border-white/5">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-6 sm:px-8 py-4 rounded-2xl bg-[#0a0a12]/60 backdrop-blur-xl border border-white/5">
             <div className="flex items-center gap-2">
               <Award size={18} className="text-joc-gold" />
               <span className="text-sm font-semibold text-white">
@@ -382,7 +382,7 @@ function App() {
               </span>
             </div>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="hidden sm:block w-px h-6 bg-white/10" />
 
             <div className="flex items-center gap-4 text-xs text-gray-500">
               <span className="flex items-center gap-1">
@@ -399,7 +399,7 @@ function App() {
               </span>
             </div>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="hidden sm:block w-px h-6 bg-white/10" />
 
             <span className="text-xs text-gray-500">
               © 2024 Jordan Olympic Committee
