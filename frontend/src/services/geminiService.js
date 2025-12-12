@@ -10,13 +10,13 @@ const genAI = import.meta.env.VITE_GEMINI_API_KEY
 const MODEL_NAME = 'gemini-2.0-flash-001';
 
 // ============================================
-// Rate Limiting Configuration (Conservative for free tier)
+// Rate Limiting Configuration (Gemini 2.0 Flash has 15 RPM free tier)
 // ============================================
 const RATE_LIMIT = {
-  maxRequestsPerMinute: 10, // Conservative limit
-  minIntervalMs: 6000, // 6 seconds between requests
-  retryDelayMs: 35000, // Wait 35s on rate limit (API suggests ~33s)
-  maxRetries: 2 // Fewer retries to avoid quota exhaustion
+  maxRequestsPerMinute: 15, // Gemini 2.0 Flash free tier limit
+  minIntervalMs: 4000, // 4 seconds between requests
+  retryDelayMs: 60000, // Wait 60s on rate limit for quota reset
+  maxRetries: 3 // More retries with longer delays
 };
 
 // Request timestamps
