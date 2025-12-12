@@ -42,8 +42,50 @@
   box-sizing: border-box;
 }
 
+/* ============================================
+   100Hz+ HIGH REFRESH RATE OPTIMIZATION
+   Smooth animations for 90Hz/100Hz/120Hz displays
+   ============================================ */
+
 html {
   scroll-behavior: smooth;
+  /* Enable smooth scrolling at high refresh rates */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* GPU acceleration for smooth 100Hz animations */
+*,
+*::before,
+*::after {
+  /* Force GPU compositing for smoother animations */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+}
+
+/* High refresh rate animation timing */
+@media (prefers-reduced-motion: no-preference) {
+  /* Optimize for 100Hz (10ms frame time) */
+  :root {
+    --animation-timing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-fast: 100ms;
+    --transition-normal: 200ms;
+    --transition-slow: 300ms;
+  }
+
+  /* Enable will-change for frequently animated elements */
+  .animate-fade-in,
+  .animate-slide-in-right,
+  .animate-slide-in-left,
+  .animate-scale-in,
+  .animate-float,
+  .hover-lift,
+  .hover-scale,
+  .glass-card,
+  .metric-card,
+  .btn-gold,
+  .btn-secondary {
+    will-change: transform, opacity;
+  }
 }
 
 body {
@@ -922,4 +964,122 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: rgba(212, 175, 55, 0.3);
   border-radius: 50%;
   animation: float 20s infinite ease-in-out;
+}
+
+/* ============================================
+   100Hz+ MOBILE OPTIMIZATION
+   Ultra-smooth animations for high refresh rate displays
+   ============================================ */
+
+/* Touch-optimized interactions */
+@media (pointer: coarse) {
+  /* Larger touch targets for mobile */
+  .btn-gold,
+  .btn-secondary,
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Faster touch feedback */
+  * {
+    -webkit-tap-highlight-color: rgba(212, 175, 55, 0.2);
+    touch-action: manipulation;
+  }
+}
+
+/* High refresh rate display optimizations */
+@media screen and (min-resolution: 2dppx) {
+  /* Optimized for high-DPI 100Hz+ displays */
+  .glass-card,
+  .metric-card,
+  .btn-gold {
+    /* Use transform3d for GPU acceleration */
+    transform: translate3d(0, 0, 0);
+    /* Prevent paint flickering on 100Hz */
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Smooth 100Hz scrolling */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+  }
+}
+
+/* 100Hz Animation Frame Optimization */
+@supports (animation-timeline: auto) {
+  /* Modern browsers with smooth animation support */
+  .animate-fade-in,
+  .animate-slide-in-right,
+  .animate-slide-in-left,
+  .animate-scale-in {
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* Optimized transitions for 100Hz (10ms frames) */
+.transition-100hz {
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Ultra-smooth hover states for 100Hz */
+@media (hover: hover) and (pointer: fine) {
+  .glass-card:hover,
+  .metric-card:hover,
+  .btn-gold:hover {
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+}
+
+/* Reduce motion for accessibility while maintaining 100Hz smoothness */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile landscape optimization for 100Hz tablets */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .glass-card {
+    border-radius: 12px;
+  }
+
+  .metric-card {
+    padding: 12px;
+  }
+}
+
+/* iOS Safari 100Hz optimizations */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Prevent layout shifts on iOS */
+  .glass-card,
+  .metric-card {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Android 100Hz Chrome optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 2) {
+  /* Force hardware acceleration */
+  .animate-float,
+  .animate-pulse-gold,
+  .animate-glow {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
 }
