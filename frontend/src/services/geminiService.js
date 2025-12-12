@@ -5,10 +5,9 @@ const genAI = import.meta.env.VITE_GEMINI_API_KEY
   : null;
 
 // ============================================
-// Model Configuration - gemini-1.5-flash has better free tier limits
-// gemini-2.0-flash free tier is exhausted (limit: 0)
+// Model Configuration - using latest stable Gemini model
 // ============================================
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-2.0-flash-001';
 
 // ============================================
 // Rate Limiting Configuration (Conservative for free tier)

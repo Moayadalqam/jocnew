@@ -125,22 +125,18 @@ export const analysisService = {
     }
     localStorage.setItem('joc_analyses', JSON.stringify(stored));
 
-    // Try to sync to Supabase if configured (non-blocking)
+    // Try to sync to Supabase if configured (non-blocking, fire-and-forget)
     if (supabase) {
-      try {
-        await supabase.from('analyses').insert([{
-          kick_type: analysisData.kickType,
-          overall_score: analysisData.overallScore,
-          form_score: analysisData.formScore,
-          power_score: analysisData.powerScore,
-          balance_score: analysisData.balanceScore,
-          analysis_date: new Date().toISOString(),
-          metrics: analysisData.metrics
-        }]);
-      } catch (e) {
-        // Silently fail - localStorage is the primary storage
-        console.log('Supabase sync skipped (table may not exist)');
-      }
+      supabase.from('analyses').insert([{
+        kick_type: analysisData.kickType,
+        overall_score: analysisData.overallScore,
+        form_score: analysisData.formScore,
+        power_score: analysisData.powerScore,
+        balance_score: analysisData.balanceScore,
+        analysis_date: new Date().toISOString(),
+        metrics: analysisData.metrics
+      }]).then(() => {}).catch(() => {});
+      // Silently ignore - localStorage is the primary storage
     }
 
     return { data: newAnalysis, error: null };
