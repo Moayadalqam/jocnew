@@ -1,39 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Upload, Play, Pause, SkipBack, SkipForward, Camera,
-  Activity, Target, Trophy, Users, FileText, Settings,
-  Zap, Brain, Shield, TrendingUp, ChevronLeft, ChevronRight,
-  Download, RefreshCw, AlertTriangle, CheckCircle
+  Play, Activity, TrendingUp, Zap
 } from 'lucide-react';
 import VideoAnalyzer from './components/VideoAnalyzer';
-import BiomechanicsTab from './components/BiomechanicsTab';
-import ComparisonTab from './components/ComparisonTab';
-import InjuryPreventionTab from './components/InjuryPreventionTab';
-import ScoringTab from './components/ScoringTab';
-import ProgressTab from './components/ProgressTab';
-import TeamTab from './components/TeamTab';
-import ReportsTab from './components/ReportsTab';
-import SettingsTab from './components/SettingsTab';
-import MobileCameraTab from './components/MobileCameraTab';
-import AIDetectionTab from './components/AIDetectionTab';
-import AnnotationTab from './components/AnnotationTab';
-import SessionHistoryTab from './components/SessionHistoryTab';
+import BiomechanicsCompareTab from './components/BiomechanicsCompareTab';
+import ProgressReportsTab from './components/ProgressReportsTab';
 
 const tabs = [
-  { id: 'analyze', name: 'Video Analysis', icon: Play },
-  { id: 'biomechanics', name: 'Biomechanics', icon: Activity },
-  { id: 'comparison', name: 'Compare', icon: Users },
-  { id: 'injury', name: 'Injury Prevention', icon: Shield },
-  { id: 'scoring', name: 'WT Scoring', icon: Trophy },
-  { id: 'progress', name: 'Progress', icon: TrendingUp },
-  { id: 'team', name: 'Team', icon: Users },
-  { id: 'annotation', name: 'Annotations', icon: Target },
-  { id: 'history', name: 'History', icon: FileText },
-  { id: 'reports', name: 'Reports', icon: FileText },
-  { id: 'camera', name: 'Mobile Camera', icon: Camera },
-  { id: 'ai', name: 'AI Detection', icon: Brain },
-  { id: 'settings', name: 'Settings', icon: Settings },
+  { id: 'analyze', name: 'Video Analysis', icon: Play, description: 'Upload & Analyze' },
+  { id: 'biomechanics', name: 'Biomechanics & Compare', icon: Activity, description: 'Metrics & Comparison' },
+  { id: 'progress', name: 'Progress & Reports', icon: TrendingUp, description: 'Track & Export' },
 ];
 
 function App() {
@@ -43,18 +20,7 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [athletes, setAthletes] = useState([]);
   const [sessions, setSessions] = useState([]);
-  const [annotations, setAnnotations] = useState([]);
-  const tabsContainerRef = useRef(null);
-
-  const scrollTabs = (direction) => {
-    if (tabsContainerRef.current) {
-      const scrollAmount = 200;
-      tabsContainerRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
+  const [comparisonVideo, setComparisonVideo] = useState(null);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -67,136 +33,181 @@ function App() {
             setAnalysisData={setAnalysisData}
             isAnalyzing={isAnalyzing}
             setIsAnalyzing={setIsAnalyzing}
+            sessions={sessions}
+            setSessions={setSessions}
           />
         );
       case 'biomechanics':
-        return <BiomechanicsTab analysisData={analysisData} />;
-      case 'comparison':
-        return <ComparisonTab analysisData={analysisData} />;
-      case 'injury':
-        return <InjuryPreventionTab analysisData={analysisData} />;
-      case 'scoring':
-        return <ScoringTab analysisData={analysisData} />;
+        return (
+          <BiomechanicsCompareTab
+            analysisData={analysisData}
+            videoFile={videoFile}
+            comparisonVideo={comparisonVideo}
+            setComparisonVideo={setComparisonVideo}
+          />
+        );
       case 'progress':
-        return <ProgressTab sessions={sessions} />;
-      case 'team':
-        return <TeamTab athletes={athletes} setAthletes={setAthletes} />;
-      case 'annotation':
-        return <AnnotationTab analysisData={analysisData} annotations={annotations} setAnnotations={setAnnotations} />;
-      case 'history':
-        return <SessionHistoryTab sessions={sessions} setSessions={setSessions} />;
-      case 'reports':
-        return <ReportsTab analysisData={analysisData} />;
-      case 'camera':
-        return <MobileCameraTab setAnalysisData={setAnalysisData} />;
-      case 'ai':
-        return <AIDetectionTab analysisData={analysisData} />;
-      case 'settings':
-        return <SettingsTab />;
+        return (
+          <ProgressReportsTab
+            sessions={sessions}
+            setSessions={setSessions}
+            athletes={athletes}
+            setAthletes={setAthletes}
+            analysisData={analysisData}
+          />
+        );
       default:
-        return <VideoAnalyzer />;
+        return (
+          <VideoAnalyzer
+            videoFile={videoFile}
+            setVideoFile={setVideoFile}
+            analysisData={analysisData}
+            setAnalysisData={setAnalysisData}
+            isAnalyzing={isAnalyzing}
+            setIsAnalyzing={setIsAnalyzing}
+            sessions={sessions}
+            setSessions={setSessions}
+          />
+        );
     }
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-4 md:p-6 mb-6"
-      >
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-joc-gold to-yellow-300 flex items-center justify-center shadow-lg">
-              <span className="text-2xl md:text-3xl font-bold text-joc-dark">JOC</span>
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-joc-gold to-yellow-300 bg-clip-text text-transparent">
-                Taekwondo Analyzer Pro
-              </h1>
-              <p className="text-sm md:text-base text-gray-400">
-                Jordan Olympic Committee - AI-Powered Analysis
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-sm text-gray-400">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span>AI Engine Active</span>
-            </div>
-            <div className="text-xs md:text-sm text-gray-500">
-              Powered by QUALIA SOLUTIONS
-            </div>
-          </div>
-        </div>
-      </motion.header>
-
-      {/* Tabs Navigation */}
-      <div className="relative mb-6">
-        <button
-          onClick={() => scrollTabs('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-joc-dark/80 rounded-full text-joc-gold hover:bg-joc-gold hover:text-joc-dark transition-all md:hidden"
-        >
-          <ChevronLeft size={20} />
-        </button>
-
-        <div
-          ref={tabsContainerRef}
-          className="flex gap-2 overflow-x-auto scrollbar-hide px-8 md:px-0 md:flex-wrap md:justify-center"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <motion.button
-                key={tab.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveTab(tab.id)}
-                className={`tab-button flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === tab.id ? 'active' : ''
-                }`}
-              >
-                <Icon size={16} />
-                <span className="hidden sm:inline">{tab.name}</span>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        <button
-          onClick={() => scrollTabs('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-joc-dark/80 rounded-full text-joc-gold hover:bg-joc-gold hover:text-joc-dark transition-all md:hidden"
-        >
-          <ChevronRight size={20} />
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-joc-darker via-joc-dark to-[#0a0a0f]">
+      {/* Ambient Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-joc-gold/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Main Content */}
-      <AnimatePresence mode="wait">
-        <motion.main
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
+      <div className="relative z-10 p-4 md:p-6 lg:p-8 max-w-[1800px] mx-auto">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="glass-card p-4 md:p-6"
+          className="glass-card p-5 md:p-6 mb-6 border border-joc-gold/20"
         >
-          {renderTabContent()}
-        </motion.main>
-      </AnimatePresence>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-5">
+              <motion.div
+                className="relative"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-joc-gold via-yellow-400 to-amber-500 flex items-center justify-center shadow-xl shadow-joc-gold/20">
+                  <span className="text-2xl md:text-3xl font-black text-joc-dark tracking-tight">JOC</span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-joc-dark flex items-center justify-center">
+                  <Zap size={10} className="text-white" />
+                </div>
+              </motion.div>
+              <div>
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight">
+                  <span className="bg-gradient-to-r from-joc-gold via-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                    Taekwondo Analyzer
+                  </span>
+                  <span className="text-white ml-2">Pro</span>
+                </h1>
+                <p className="text-sm md:text-base text-gray-400 mt-1">
+                  Jordan Olympic Committee • AI-Powered Biomechanical Analysis
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-sm text-green-400 font-medium">AI Engine Active</span>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Powered by</p>
+                <p className="text-sm font-semibold text-gray-300">QUALIA SOLUTIONS</p>
+              </div>
+            </div>
+          </div>
+        </motion.header>
 
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-6 text-center text-sm text-gray-500"
-      >
-        <p>Jordan Olympic Committee Taekwondo Analyzer Pro v2.0</p>
-        <p className="text-xs mt-1">Built with React + MediaPipe by QUALIA SOLUTIONS</p>
-      </motion.footer>
+        {/* Premium Tab Navigation */}
+        <motion.nav
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <div className="flex justify-center">
+            <div className="inline-flex gap-2 p-2 rounded-2xl bg-joc-dark/50 backdrop-blur-xl border border-white/5">
+              {tabs.map((tab, index) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <motion.button
+                    key={tab.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex items-center gap-3 px-6 py-4 rounded-xl font-medium transition-all duration-300 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-joc-gold to-amber-500 text-joc-dark shadow-lg shadow-joc-gold/25'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon size={20} className={isActive ? 'text-joc-dark' : ''} />
+                    <div className="text-left hidden sm:block">
+                      <div className={`text-sm font-semibold ${isActive ? 'text-joc-dark' : ''}`}>
+                        {tab.name}
+                      </div>
+                      <div className={`text-xs ${isActive ? 'text-joc-dark/70' : 'text-gray-500'}`}>
+                        {tab.description}
+                      </div>
+                    </div>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabIndicator"
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-joc-gold to-amber-500 -z-10"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        </motion.nav>
+
+        {/* Main Content */}
+        <AnimatePresence mode="wait">
+          <motion.main
+            key={activeTab}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="glass-card p-5 md:p-6 lg:p-8 border border-white/5 min-h-[600px]"
+          >
+            {renderTabContent()}
+          </motion.main>
+        </AnimatePresence>
+
+        {/* Footer */}
+        <motion.footer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 text-center"
+        >
+          <div className="inline-flex items-center gap-4 px-6 py-3 rounded-full bg-joc-dark/30 backdrop-blur border border-white/5">
+            <p className="text-sm text-gray-400">
+              JOC Taekwondo Analyzer Pro <span className="text-joc-gold font-semibold">v3.0</span>
+            </p>
+            <div className="w-px h-4 bg-gray-700"></div>
+            <p className="text-xs text-gray-500">
+              React + MediaPipe + Gemini AI
+            </p>
+          </div>
+        </motion.footer>
+      </div>
     </div>
   );
 }
