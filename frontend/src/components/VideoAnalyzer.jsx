@@ -2,12 +2,84 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, Play, Pause, SkipBack, SkipForward,
-  RotateCcw, Volume2, VolumeX, Loader, CheckCircle,
-  AlertCircle, Sparkles, Video, Clock, Zap
+  RotateCcw, Volume2, VolumeX, CheckCircle,
+  AlertCircle, Sparkles, Video, Clock, Zap, Target,
+  TrendingUp, Award, ChevronRight, Activity
 } from 'lucide-react';
 import { usePoseDetection } from '../hooks/usePoseDetection';
 import { analyzeWithGemini, generateCoachingFeedback } from '../services/geminiService';
 import { analysisService } from '../services/supabaseClient';
+
+// Olympic-inspired loader component
+const OlympicLoader = () => (
+  <div className="flex items-center gap-2">
+    {[
+      { color: 'bg-blue-500', delay: 0 },
+      { color: 'bg-yellow-400', delay: 0.1 },
+      { color: 'bg-gray-900', delay: 0.2 },
+      { color: 'bg-green-500', delay: 0.3 },
+      { color: 'bg-red-500', delay: 0.4 },
+    ].map((ring, i) => (
+      <motion.div
+        key={i}
+        className={`w-3 h-3 rounded-full ${ring.color}`}
+        animate={{
+          scale: [1, 1.3, 1],
+          opacity: [0.7, 1, 0.7],
+        }}
+        transition={{
+          duration: 0.8,
+          delay: ring.delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    ))}
+  </div>
+);
+
+// Circular progress indicator
+const CircularProgress = ({ progress, size = 120, strokeWidth = 8 }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        {/* Background circle */}
+        <circle
+          className="text-white/5"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+        />
+        {/* Progress circle */}
+        <motion.circle
+          className="text-joc-gold"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          stroke="currentColor"
+          fill="transparent"
+          r={radius}
+          cx={size / 2}
+          cy={size / 2}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-2xl font-bold text-white">{Math.round(progress)}%</span>
+      </div>
+    </div>
+  );
+};
 
 const VideoAnalyzer = ({
   videoFile,
@@ -33,18 +105,19 @@ const VideoAnalyzer = ({
   const [analysisStage, setAnalysisStage] = useState('');
   const [error, setError] = useState(null);
   const [coachingFeedback, setCoachingFeedback] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { detectPose, isModelLoaded, initializePose, landmarks } = usePoseDetection();
 
   const kickTypes = [
-    { id: 'dollyo_chagi', name: 'Dollyo Chagi', subtitle: 'Roundhouse Kick' },
-    { id: 'yeop_chagi', name: 'Yeop Chagi', subtitle: 'Side Kick' },
-    { id: 'ap_chagi', name: 'Ap Chagi', subtitle: 'Front Kick' },
-    { id: 'dwi_chagi', name: 'Dwi Chagi', subtitle: 'Back Kick' },
-    { id: 'naeryo_chagi', name: 'Naeryo Chagi', subtitle: 'Axe Kick' },
-    { id: 'dwi_huryeo_chagi', name: 'Dwi Huryeo Chagi', subtitle: 'Spinning Hook' },
-    { id: 'bandae_dollyo', name: 'Bandae Dollyo', subtitle: 'Reverse Roundhouse' },
-    { id: 'mom_dollyo_chagi', name: 'Mom Dollyo Chagi', subtitle: 'Tornado Kick' },
+    { id: 'dollyo_chagi', name: 'Dollyo Chagi', subtitle: 'Roundhouse Kick', icon: '🦵' },
+    { id: 'yeop_chagi', name: 'Yeop Chagi', subtitle: 'Side Kick', icon: '➡️' },
+    { id: 'ap_chagi', name: 'Ap Chagi', subtitle: 'Front Kick', icon: '⬆️' },
+    { id: 'dwi_chagi', name: 'Dwi Chagi', subtitle: 'Back Kick', icon: '⬅️' },
+    { id: 'naeryo_chagi', name: 'Naeryo Chagi', subtitle: 'Axe Kick', icon: '⬇️' },
+    { id: 'dwi_huryeo_chagi', name: 'Dwi Huryeo', subtitle: 'Spinning Hook', icon: '🔄' },
+    { id: 'bandae_dollyo', name: 'Bandae Dollyo', subtitle: 'Reverse Round', icon: '↩️' },
+    { id: 'mom_dollyo_chagi', name: 'Mom Dollyo', subtitle: 'Tornado Kick', icon: '🌪️' },
   ];
 
   useEffect(() => {
@@ -65,6 +138,7 @@ const VideoAnalyzer = ({
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
+    setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('video/')) {
       setVideoFile(file);
@@ -78,6 +152,11 @@ const VideoAnalyzer = ({
 
   const handleDragOver = (e) => {
     e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
   const togglePlay = () => {
@@ -170,7 +249,6 @@ const VideoAnalyzer = ({
         analysis = await analyzeWithGemini(detectedLandmarks, selectedKickType, frameCount, fps);
       } catch (geminiError) {
         console.error('Gemini error:', geminiError);
-        // Fallback to pose-based analysis if Gemini fails
         analysis = generateFallbackAnalysis(detectedLandmarks, selectedKickType);
       }
 
@@ -187,7 +265,6 @@ const VideoAnalyzer = ({
         ...analysis
       };
 
-      // Try to get coaching feedback
       try {
         const feedback = await generateCoachingFeedback(fullAnalysis, sessions);
         setCoachingFeedback(feedback);
@@ -200,7 +277,6 @@ const VideoAnalyzer = ({
       // Stage 5: Save session
       setAnalysisStage('Saving analysis...');
 
-      // Save to local storage / Supabase
       const sessionData = {
         date: new Date().toLocaleDateString(),
         kickType: selectedKickType,
@@ -226,7 +302,6 @@ const VideoAnalyzer = ({
     }
   };
 
-  // Fallback analysis when API is unavailable
   const generateFallbackAnalysis = (detectedLandmarks, kickType) => {
     return {
       metrics: {
@@ -254,37 +329,73 @@ const VideoAnalyzer = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-joc-gold to-amber-500 flex items-center justify-center">
-            <Video size={20} className="text-joc-dark" />
-          </div>
+    <div className="space-y-8">
+      {/* Premium Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+      >
+        <div className="flex items-center gap-4">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            className="relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-joc-gold to-amber-500 rounded-2xl blur-lg opacity-50" />
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-joc-gold to-amber-500 flex items-center justify-center shadow-xl">
+              <Video size={26} className="text-[#0a0a12]" />
+            </div>
+          </motion.div>
           <div>
-            <h2 className="text-xl font-bold text-white">Video Analysis</h2>
-            <p className="text-sm text-gray-400">Upload and analyze Taekwondo techniques</p>
+            <h2 className="text-2xl font-bold text-white">Video Analysis</h2>
+            <p className="text-gray-400">Upload and analyze Taekwondo techniques with AI</p>
           </div>
         </div>
-        {isModelLoaded && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs text-green-400">AI Ready</span>
-          </div>
-        )}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Video Upload / Display Area */}
-        <div className="space-y-4">
+        {/* AI Status Badge */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${
+            isModelLoaded
+              ? 'bg-emerald-500/10 border-emerald-500/30'
+              : 'bg-amber-500/10 border-amber-500/30'
+          }`}
+        >
+          <motion.div
+            className={`w-3 h-3 rounded-full ${isModelLoaded ? 'bg-emerald-400' : 'bg-amber-400'}`}
+            animate={{ opacity: [1, 0.5, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+          <div>
+            <p className={`text-sm font-semibold ${isModelLoaded ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {isModelLoaded ? 'AI Ready' : 'Loading AI...'}
+            </p>
+            <p className={`text-xs ${isModelLoaded ? 'text-emerald-500/70' : 'text-amber-500/70'}`}>
+              MediaPipe + Gemini
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Left Column - Video Area */}
+        <div className="space-y-6">
           {!videoUrl ? (
+            /* Premium Upload Zone */
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              className="relative group min-h-[350px] rounded-2xl border-2 border-dashed border-joc-gold/30 bg-gradient-to-br from-joc-dark/50 to-joc-darker/50 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:border-joc-gold/60 hover:bg-joc-gold/5"
+              className={`relative group min-h-[400px] rounded-3xl cursor-pointer transition-all duration-500 overflow-hidden ${
+                isDragging
+                  ? 'bg-joc-gold/10 border-joc-gold'
+                  : 'bg-gradient-to-br from-[#0f0f18] to-[#080810] border-white/10 hover:border-joc-gold/50'
+              } border-2 border-dashed`}
             >
               <input
                 ref={fileInputRef}
@@ -293,319 +404,469 @@ const VideoAnalyzer = ({
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                className="w-20 h-20 rounded-2xl bg-gradient-to-br from-joc-gold/20 to-amber-500/20 flex items-center justify-center mb-6"
-              >
-                <Upload size={36} className="text-joc-gold" />
-              </motion.div>
-              <p className="text-xl font-semibold text-white mb-2">
-                Upload Taekwondo Video
-              </p>
-              <p className="text-sm text-gray-400 mb-4">
-                Drag & drop or click to browse
-              </p>
-              <div className="flex items-center gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Video size={12} />
-                  MP4, AVI, MOV
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock size={12} />
-                  Max 100MB
-                </span>
-              </div>
 
-              {/* Decorative corners */}
-              <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-joc-gold/30 rounded-tl-lg"></div>
-              <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-joc-gold/30 rounded-tr-lg"></div>
-              <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-joc-gold/30 rounded-bl-lg"></div>
-              <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-joc-gold/30 rounded-br-lg"></div>
+              {/* Animated gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-joc-gold/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              {/* Corner decorations */}
+              <div className="absolute top-6 left-6 w-12 h-12 border-l-2 border-t-2 border-joc-gold/40 rounded-tl-2xl transition-all duration-300 group-hover:border-joc-gold group-hover:w-16 group-hover:h-16" />
+              <div className="absolute top-6 right-6 w-12 h-12 border-r-2 border-t-2 border-joc-gold/40 rounded-tr-2xl transition-all duration-300 group-hover:border-joc-gold group-hover:w-16 group-hover:h-16" />
+              <div className="absolute bottom-6 left-6 w-12 h-12 border-l-2 border-b-2 border-joc-gold/40 rounded-bl-2xl transition-all duration-300 group-hover:border-joc-gold group-hover:w-16 group-hover:h-16" />
+              <div className="absolute bottom-6 right-6 w-12 h-12 border-r-2 border-b-2 border-joc-gold/40 rounded-br-2xl transition-all duration-300 group-hover:border-joc-gold group-hover:w-16 group-hover:h-16" />
+
+              {/* Content */}
+              <div className="relative h-full flex flex-col items-center justify-center p-8">
+                <motion.div
+                  animate={isDragging ? { scale: 1.1, rotate: 5 } : { scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="relative mb-8"
+                >
+                  <div className="absolute inset-0 bg-joc-gold/20 rounded-3xl blur-xl group-hover:bg-joc-gold/30 transition-all duration-500" />
+                  <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-joc-gold/20 to-amber-500/10 border border-joc-gold/30 flex items-center justify-center">
+                    <Upload size={42} className="text-joc-gold" />
+                  </div>
+                </motion.div>
+
+                <motion.h3
+                  className="text-2xl font-bold text-white mb-3"
+                  animate={isDragging ? { scale: 1.05 } : { scale: 1 }}
+                >
+                  {isDragging ? 'Drop Video Here' : 'Upload Taekwondo Video'}
+                </motion.h3>
+                <p className="text-gray-400 mb-6 text-center max-w-sm">
+                  Drag and drop your video file or click to browse from your device
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                    <Video size={16} className="text-joc-gold" />
+                    <span className="text-gray-400">MP4, AVI, MOV</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                    <Clock size={16} className="text-joc-gold" />
+                    <span className="text-gray-400">Max 100MB</span>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           ) : (
+            /* Video Player */
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="relative rounded-2xl overflow-hidden bg-black"
+              className="space-y-4"
             >
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
-                className="w-full rounded-2xl"
-                muted={isMuted}
-              />
-              <canvas
-                ref={canvasRef}
-                className="absolute top-0 left-0 w-full h-full pointer-events-none"
-              />
+              <div className="relative rounded-3xl overflow-hidden bg-black shadow-2xl shadow-black/50 border border-white/10">
+                {/* Video gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none z-10" />
+
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  onTimeUpdate={handleTimeUpdate}
+                  onLoadedMetadata={handleLoadedMetadata}
+                  className="w-full aspect-video object-contain"
+                  muted={isMuted}
+                />
+                <canvas
+                  ref={canvasRef}
+                  className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                />
+
+                {/* Video file info badge */}
+                <div className="absolute top-4 left-4 z-20 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center gap-2">
+                  <Video size={14} className="text-joc-gold" />
+                  <span className="text-xs text-white font-medium truncate max-w-[150px]">
+                    {videoFile?.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* Premium Controls */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10 space-y-5">
+                {/* Progress Bar */}
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-joc-gold font-mono w-12">
+                    {formatTime(currentTime)}
+                  </span>
+                  <div className="flex-1 relative group">
+                    <div className="absolute inset-0 h-2 rounded-full bg-white/5" />
+                    <input
+                      type="range"
+                      min="0"
+                      max={duration || 0}
+                      value={currentTime}
+                      onChange={handleSeek}
+                      step="0.033"
+                      className="relative w-full h-2 bg-transparent rounded-full appearance-none cursor-pointer z-10
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-4
+                        [&::-webkit-slider-thumb]:h-4
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-joc-gold
+                        [&::-webkit-slider-thumb]:shadow-lg
+                        [&::-webkit-slider-thumb]:shadow-joc-gold/30
+                        [&::-webkit-slider-thumb]:cursor-pointer
+                        [&::-webkit-slider-thumb]:transition-transform
+                        [&::-webkit-slider-thumb]:hover:scale-125"
+                      style={{
+                        background: `linear-gradient(to right, #D4AF37 0%, #D4AF37 ${(currentTime / duration) * 100}%, rgba(255,255,255,0.1) ${(currentTime / duration) * 100}%, rgba(255,255,255,0.1) 100%)`
+                      }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-400 font-mono w-12">
+                    {formatTime(duration)}
+                  </span>
+                </div>
+
+                {/* Control Buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => skipFrames(-10)}
+                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                      title="Back 10 frames"
+                    >
+                      <SkipBack size={18} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => skipFrames(-1)}
+                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                      title="Back 1 frame"
+                    >
+                      <RotateCcw size={18} />
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={togglePlay}
+                      className="p-4 rounded-2xl bg-gradient-to-r from-joc-gold to-amber-500 text-[#0a0a12] shadow-lg shadow-joc-gold/30"
+                    >
+                      {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => skipFrames(1)}
+                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                      title="Forward 1 frame"
+                    >
+                      <RotateCcw size={18} className="transform scale-x-[-1]" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => skipFrames(10)}
+                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                      title="Forward 10 frames"
+                    >
+                      <SkipForward size={18} />
+                    </motion.button>
+                  </div>
+
+                  {/* Speed & Volume */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
+                      {[0.25, 0.5, 1, 2].map((speed) => (
+                        <motion.button
+                          key={speed}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => changeSpeed(speed)}
+                          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                            playbackSpeed === speed
+                              ? 'bg-joc-gold text-[#0a0a12]'
+                              : 'text-gray-400 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {speed}x
+                        </motion.button>
+                      ))}
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                    >
+                      {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           )}
 
-          {/* Video Controls */}
+          {/* Upload New Button */}
           {videoUrl && (
-            <motion.div
+            <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl bg-white/5 backdrop-blur border border-white/10 space-y-4"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setVideoUrl(null);
+                setVideoFile(null);
+                setAnalysisData(null);
+                setCurrentTime(0);
+                setDuration(0);
+                setError(null);
+                setCoachingFeedback([]);
+              }}
+              className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-3 transition-all"
             >
-              {/* Progress Bar */}
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 font-mono w-10">
-                  {formatTime(currentTime)}
-                </span>
-                <div className="flex-1 relative">
-                  <input
-                    type="range"
-                    min="0"
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={handleSeek}
-                    step="0.033"
-                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-joc-gold"
-                  />
-                </div>
-                <span className="text-xs text-gray-400 font-mono w-10">
-                  {formatTime(duration)}
-                </span>
-              </div>
-
-              {/* Control Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => skipFrames(-10)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    title="Back 10 frames"
-                  >
-                    <SkipBack size={18} />
-                  </button>
-                  <button
-                    onClick={() => skipFrames(-1)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    title="Back 1 frame"
-                  >
-                    <RotateCcw size={18} />
-                  </button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={togglePlay}
-                    className="p-3 rounded-xl bg-gradient-to-r from-joc-gold to-amber-500 text-joc-dark"
-                  >
-                    {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                  </motion.button>
-                  <button
-                    onClick={() => skipFrames(1)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    title="Forward 1 frame"
-                  >
-                    <RotateCcw size={18} className="transform scale-x-[-1]" />
-                  </button>
-                  <button
-                    onClick={() => skipFrames(10)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    title="Forward 10 frames"
-                  >
-                    <SkipForward size={18} />
-                  </button>
-                </div>
-
-                {/* Speed and Volume */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    {[0.25, 0.5, 1, 2].map((speed) => (
-                      <button
-                        key={speed}
-                        onClick={() => changeSpeed(speed)}
-                        className={`px-2 py-1 text-xs rounded-md transition-all ${
-                          playbackSpeed === speed
-                            ? 'bg-joc-gold text-joc-dark font-semibold'
-                            : 'bg-white/5 hover:bg-white/10 text-gray-400'
-                        }`}
-                      >
-                        {speed}x
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
+              <Upload size={20} />
+              <span className="font-medium">Upload Different Video</span>
+            </motion.button>
           )}
         </div>
 
-        {/* Analysis Panel */}
-        <div className="space-y-4">
+        {/* Right Column - Analysis Panel */}
+        <div className="space-y-6">
           {/* Kick Type Selection */}
-          <div className="p-4 rounded-xl bg-white/5 backdrop-blur border border-white/10">
-            <h3 className="text-sm font-semibold text-joc-gold mb-3 flex items-center gap-2">
-              <Zap size={16} />
-              Select Kick Type
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {kickTypes.map((kick) => (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-joc-gold/20 to-amber-500/10 flex items-center justify-center">
+                <Target size={20} className="text-joc-gold" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Kick Type</h3>
+                <p className="text-sm text-gray-400">Select technique to analyze</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {kickTypes.map((kick, index) => (
                 <motion.button
                   key={kick.id}
-                  whileHover={{ scale: 1.02 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedKickType(kick.id)}
-                  className={`p-3 rounded-xl text-left transition-all ${
+                  className={`relative p-4 rounded-2xl text-left transition-all overflow-hidden ${
                     selectedKickType === kick.id
-                      ? 'bg-gradient-to-r from-joc-gold/20 to-amber-500/20 border border-joc-gold'
-                      : 'bg-white/5 border border-transparent hover:bg-white/10 hover:border-white/20'
+                      ? 'bg-gradient-to-br from-joc-gold/20 to-amber-500/10 border-2 border-joc-gold shadow-lg shadow-joc-gold/20'
+                      : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20'
                   }`}
                 >
-                  <div className={`text-sm font-medium ${selectedKickType === kick.id ? 'text-joc-gold' : 'text-white'}`}>
-                    {kick.name}
+                  {selectedKickType === kick.id && (
+                    <motion.div
+                      layoutId="selectedKick"
+                      className="absolute inset-0 bg-gradient-to-br from-joc-gold/10 to-transparent"
+                    />
+                  )}
+                  <div className="relative flex items-start gap-3">
+                    <span className="text-2xl">{kick.icon}</span>
+                    <div>
+                      <div className={`text-sm font-semibold ${selectedKickType === kick.id ? 'text-joc-gold' : 'text-white'}`}>
+                        {kick.name}
+                      </div>
+                      <div className="text-xs text-gray-500">{kick.subtitle}</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">{kick.subtitle}</div>
+                  {selectedKickType === kick.id && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-2 right-2"
+                    >
+                      <CheckCircle size={16} className="text-joc-gold" />
+                    </motion.div>
+                  )}
                 </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Error Display */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3"
-            >
-              <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                className="p-5 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-start gap-4"
+              >
+                <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle size={20} className="text-red-400" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-red-400 mb-1">Analysis Error</h4>
+                  <p className="text-sm text-red-300/80">{error}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Analyze Button */}
-          {videoUrl && (
+          {videoUrl && !isAnalyzing && (
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={analyzeVideo}
               disabled={isAnalyzing}
-              className="w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50 bg-gradient-to-r from-joc-gold via-yellow-500 to-amber-500 text-joc-dark shadow-lg shadow-joc-gold/20"
+              className="relative w-full py-5 rounded-2xl font-bold text-lg overflow-hidden group"
             >
-              {isAnalyzing ? (
-                <>
-                  <Loader className="animate-spin" size={22} />
-                  <span>{analysisStage}</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={22} />
-                  <span>Analyze Technique</span>
-                </>
-              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-joc-gold via-yellow-400 to-amber-500" />
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500 via-yellow-400 to-joc-gold opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </div>
+              <span className="relative flex items-center justify-center gap-3 text-[#0a0a12]">
+                <Sparkles size={24} />
+                Analyze Technique
+                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </span>
             </motion.button>
           )}
 
           {/* Analysis Progress */}
-          {isAnalyzing && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-4 rounded-xl bg-white/5 border border-white/10"
-            >
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">{analysisStage}</span>
-                <span className="text-joc-gold font-mono">{analysisProgress}%</span>
-              </div>
-              <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${analysisProgress}%` }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full bg-gradient-to-r from-joc-gold to-amber-500 rounded-full"
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {/* Quick Results */}
           <AnimatePresence>
-            {analysisData && (
+            {isAnalyzing && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="p-8 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-joc-gold/30 text-center"
+              >
+                <div className="flex flex-col items-center">
+                  <CircularProgress progress={analysisProgress} />
+                  <OlympicLoader />
+                  <h3 className="text-xl font-bold text-white mt-6 mb-2">{analysisStage}</h3>
+                  <p className="text-sm text-gray-400">Please wait while AI analyzes your technique</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Results */}
+          <AnimatePresence>
+            {analysisData && !isAnalyzing && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="p-5 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/5 border border-green-500/30 space-y-4"
+                className="space-y-6"
               >
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={20} className="text-green-400" />
-                  <h3 className="font-semibold text-white">Analysis Complete</h3>
+                {/* Success Header */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-green-500/5 border border-emerald-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                      <CheckCircle size={24} className="text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Analysis Complete</h3>
+                      <p className="text-sm text-emerald-400/80">
+                        {kickTypes.find(k => k.id === selectedKickType)?.name}
+                      </p>
+                    </div>
+                  </div>
                   {analysisData.confidenceLevel && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      analysisData.confidenceLevel === 'high' ? 'bg-green-500/20 text-green-400' :
-                      analysisData.confidenceLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-red-500/20 text-red-400'
+                    <span className={`px-4 py-2 rounded-xl text-sm font-semibold ${
+                      analysisData.confidenceLevel === 'high' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                      analysisData.confidenceLevel === 'medium' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      'bg-red-500/20 text-red-400 border border-red-500/30'
                     }`}>
-                      {analysisData.confidenceLevel} confidence
+                      {analysisData.confidenceLevel.charAt(0).toUpperCase() + analysisData.confidenceLevel.slice(1)} Confidence
                     </span>
                   )}
                 </div>
 
                 {/* Score Cards */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-white/5 text-center">
-                    <div className="text-2xl font-bold text-joc-gold">
-                      {analysisData.metrics?.overallScore || 0}%
-                    </div>
-                    <div className="text-xs text-gray-400">Overall Score</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white/5 text-center">
-                    <div className="text-2xl font-bold text-green-400">
-                      {analysisData.metrics?.formScore || 0}%
-                    </div>
-                    <div className="text-xs text-gray-400">Form Score</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white/5 text-center">
-                    <div className="text-2xl font-bold text-blue-400">
-                      {analysisData.metrics?.powerScore || 0}%
-                    </div>
-                    <div className="text-xs text-gray-400">Power Score</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white/5 text-center">
-                    <div className="text-2xl font-bold text-purple-400">
-                      {analysisData.metrics?.balanceScore || 0}%
-                    </div>
-                    <div className="text-xs text-gray-400">Balance Score</div>
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Overall', value: analysisData.metrics?.overallScore || 0, color: 'joc-gold', icon: Award },
+                    { label: 'Form', value: analysisData.metrics?.formScore || 0, color: 'emerald-400', icon: Target },
+                    { label: 'Power', value: analysisData.metrics?.powerScore || 0, color: 'blue-400', icon: Zap },
+                    { label: 'Balance', value: analysisData.metrics?.balanceScore || 0, color: 'purple-400', icon: Activity },
+                  ].map((score, index) => (
+                    <motion.div
+                      key={score.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.03, y: -4 }}
+                      className="p-5 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 hover:border-white/20 transition-all group"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm text-gray-400 font-medium">{score.label}</span>
+                        <score.icon size={18} className={`text-${score.color}`} />
+                      </div>
+                      <div className={`text-4xl font-black text-${score.color}`}>
+                        {score.value}%
+                      </div>
+                      <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${score.value}%` }}
+                          transition={{ duration: 1, delay: index * 0.1, ease: "easeOut" }}
+                          className={`h-full rounded-full bg-gradient-to-r from-${score.color} to-${score.color}/50`}
+                          style={{
+                            background: score.color === 'joc-gold'
+                              ? 'linear-gradient(to right, #D4AF37, #f4d03f)'
+                              : undefined
+                          }}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
 
                 {/* Recommendations */}
                 {analysisData.recommendations && analysisData.recommendations.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-white">Feedback</h4>
-                    {analysisData.recommendations.map((rec, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded-lg flex items-start gap-3 ${
-                          rec.type === 'good'
-                            ? 'bg-green-500/10 border border-green-500/20'
-                            : rec.type === 'warning'
-                            ? 'bg-amber-500/10 border border-amber-500/20'
-                            : 'bg-blue-500/10 border border-blue-500/20'
-                        }`}
-                      >
-                        {rec.type === 'good' ? (
-                          <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                        ) : rec.type === 'warning' ? (
-                          <AlertCircle size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                        ) : (
-                          <Sparkles size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                        )}
-                        <span className="text-sm text-gray-300">{rec.message}</span>
+                  <div className="p-6 rounded-2xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                        <TrendingUp size={20} className="text-blue-400" />
                       </div>
-                    ))}
+                      <h4 className="text-lg font-bold text-white">AI Feedback</h4>
+                    </div>
+                    <div className="space-y-3">
+                      {analysisData.recommendations.map((rec, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.1 }}
+                          className={`p-4 rounded-xl flex items-start gap-4 ${
+                            rec.type === 'good'
+                              ? 'bg-emerald-500/10 border border-emerald-500/20'
+                              : rec.type === 'warning'
+                              ? 'bg-amber-500/10 border border-amber-500/20'
+                              : 'bg-blue-500/10 border border-blue-500/20'
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            rec.type === 'good' ? 'bg-emerald-500/20' :
+                            rec.type === 'warning' ? 'bg-amber-500/20' : 'bg-blue-500/20'
+                          }`}>
+                            {rec.type === 'good' ? (
+                              <CheckCircle size={16} className="text-emerald-400" />
+                            ) : rec.type === 'warning' ? (
+                              <AlertCircle size={16} className="text-amber-400" />
+                            ) : (
+                              <Sparkles size={16} className="text-blue-400" />
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-300 leading-relaxed">{rec.message}</p>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </motion.div>
@@ -613,29 +874,6 @@ const VideoAnalyzer = ({
           </AnimatePresence>
         </div>
       </div>
-
-      {/* Upload New Video Button */}
-      {videoUrl && (
-        <div className="flex justify-center">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setVideoUrl(null);
-              setVideoFile(null);
-              setAnalysisData(null);
-              setCurrentTime(0);
-              setDuration(0);
-              setError(null);
-              setCoachingFeedback([]);
-            }}
-            className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center gap-2 transition-all"
-          >
-            <Upload size={18} />
-            <span>Upload New Video</span>
-          </motion.button>
-        </div>
-      )}
     </div>
   );
 };

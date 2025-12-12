@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  TrendingUp, FileText, Download, Calendar, User, Printer,
-  Share2, BarChart, ChevronRight, Award, Target, Clock,
-  Plus, Trash2, Edit3
+  TrendingUp, FileText, Download, Calendar, BarChart, ChevronRight,
+  Award, Target, Clock, ArrowRight, Info, LineChart as LineChartIcon,
+  FileSpreadsheet, FileJson, Check
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -14,12 +14,16 @@ import { analysisService } from '../services/supabaseClient';
 const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, analysisData }) => {
   const [activeView, setActiveView] = useState('progress');
   const [selectedMetric, setSelectedMetric] = useState('overall');
-  const [reportType, setReportType] = useState('individual');
+  const [reportType, setReportType] = useState('progress');
   const [dateRange, setDateRange] = useState('week');
   const [generating, setGenerating] = useState(false);
-  const [newAthleteName, setNewAthleteName] = useState('');
-  const [showAddAthlete, setShowAddAthlete] = useState(false);
   const [recentReports, setRecentReports] = useState([]);
+  const [reportSections, setReportSections] = useState({
+    metrics: true,
+    history: true,
+    charts: true,
+    recommendations: true,
+  });
 
   // Load sessions from localStorage on mount
   useEffect(() => {
@@ -33,16 +37,16 @@ const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, anal
   }, []);
 
   const metrics = [
-    { id: 'overall', name: 'Overall Score', color: '#D4AF37' },
-    { id: 'form', name: 'Form Score', color: '#10B981' },
-    { id: 'power', name: 'Power Score', color: '#3B82F6' },
-    { id: 'balance', name: 'Balance Score', color: '#8B5CF6' },
+    { id: 'overall', name: 'Overall Score', color: '#D4AF37', icon: Award },
+    { id: 'form', name: 'Form Score', color: '#10B981', icon: Target },
+    { id: 'power', name: 'Power Score', color: '#3B82F6', icon: TrendingUp },
+    { id: 'balance', name: 'Balance Score', color: '#8B5CF6', icon: Clock },
   ];
 
   const reportTypes = [
-    { id: 'individual', name: 'Individual Analysis', icon: '🎯', description: 'Detailed single session report' },
-    { id: 'progress', name: 'Progress Report', icon: '📈', description: 'Track improvement over time' },
-    { id: 'summary', name: 'Summary Report', icon: '📊', description: 'Overview of all sessions' },
+    { id: 'individual', name: 'Individual Analysis', icon: Target, description: 'Detailed single session report', color: 'blue' },
+    { id: 'progress', name: 'Progress Report', icon: TrendingUp, description: 'Track improvement over time', color: 'emerald' },
+    { id: 'summary', name: 'Summary Report', icon: BarChart, description: 'Overview of all sessions', color: 'amber' },
   ];
 
   const hasSessions = sessions && sessions.length > 0;
@@ -72,114 +76,162 @@ const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, anal
 
   const generateReport = async () => {
     setGenerating(true);
-
-    // Simulate report generation
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Create report content
-    const reportContent = {
-      title: `JOC Taekwondo Analysis Report`,
-      type: reportType,
-      dateRange: dateRange,
-      generatedAt: new Date().toISOString(),
-      sessions: sessions?.length || 0,
-      averageScore: avgScore.toFixed(1),
-      latestScore: latestSession?.overall || 0,
-      improvement: improvement.toFixed(1),
-    };
-
-    // Create downloadable HTML report
     const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
   <title>JOC Taekwondo Analysis Report</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; }
-    .header { border-bottom: 3px solid #D4AF37; padding-bottom: 20px; margin-bottom: 30px; }
-    .logo { display: flex; align-items: center; gap: 20px; }
-    .logo-circle { width: 60px; height: 60px; background: linear-gradient(135deg, #D4AF37, #F59E0B); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1a1a2e; font-size: 18px; }
-    h1 { color: #1a1a2e; margin: 0; }
-    .subtitle { color: #666; margin-top: 5px; }
-    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 30px 0; }
-    .metric { background: #f5f5f5; padding: 20px; border-radius: 12px; text-align: center; }
-    .metric-value { font-size: 32px; font-weight: bold; color: #D4AF37; }
-    .metric-label { color: #666; font-size: 14px; margin-top: 5px; }
-    .section { margin: 30px 0; }
-    .section-title { font-size: 18px; font-weight: bold; color: #1a1a2e; margin-bottom: 15px; border-left: 4px solid #D4AF37; padding-left: 10px; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #999; font-size: 12px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 40px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .logo-container { display: flex; align-items: center; gap: 20px; }
+    .logo {
+      width: 70px; height: 70px;
+      background: linear-gradient(135deg, #D4AF37, #F59E0B);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 22px; color: #1a1a2e;
+    }
+    .header-title { font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #D4AF37, #F59E0B); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-subtitle { color: rgba(255,255,255,0.6); margin-top: 5px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 30px 0; }
+    .metric-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+    }
+    .metric-value { font-size: 36px; font-weight: bold; color: #D4AF37; }
+    .metric-label { color: rgba(255,255,255,0.5); font-size: 14px; margin-top: 8px; }
+    .section {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 20px 0;
+    }
+    .section-title {
+      font-size: 18px; font-weight: bold; color: #fff;
+      padding-left: 12px;
+      border-left: 3px solid #D4AF37;
+      margin-bottom: 20px;
+    }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f9f9f9; font-weight: 600; }
+    th, td { padding: 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    th { color: rgba(255,255,255,0.5); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { color: #fff; }
+    .score-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .score-high { background: rgba(16, 185, 129, 0.2); color: #10B981; }
+    .score-medium { background: rgba(245, 158, 11, 0.2); color: #F59E0B; }
+    .score-low { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: rgba(255,255,255,0.4);
+      font-size: 13px;
+    }
+    .footer-logo { color: #D4AF37; font-weight: bold; }
+    @media print {
+      body { background: #fff; color: #333; }
+      .metric-card { border: 1px solid #ddd; }
+      .section { border: 1px solid #ddd; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">
-      <div class="logo-circle">JOC</div>
-      <div>
-        <h1>Taekwondo Analyzer Pro</h1>
-        <p class="subtitle">Jordan Olympic Committee - Performance Report</p>
+  <div class="container">
+    <div class="header">
+      <div class="logo-container">
+        <div class="logo">JOC</div>
+        <div>
+          <div class="header-title">Taekwondo Analyzer Pro</div>
+          <div class="header-subtitle">Jordan Olympic Committee - Performance Report</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="metrics">
-    <div class="metric">
-      <div class="metric-value">${sessions?.length || 0}</div>
-      <div class="metric-label">Total Sessions</div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value">${sessions?.length || 0}</div>
+        <div class="metric-label">Total Sessions</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${avgScore.toFixed(0)}%</div>
+        <div class="metric-label">Average Score</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${bestScore}%</div>
+        <div class="metric-label">Best Score</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" style="color: ${improvement >= 0 ? '#10B981' : '#EF4444'}">${improvement >= 0 ? '+' : ''}${improvement.toFixed(0)}%</div>
+        <div class="metric-label">Improvement</div>
+      </div>
     </div>
-    <div class="metric">
-      <div class="metric-value">${avgScore.toFixed(0)}%</div>
-      <div class="metric-label">Average Score</div>
-    </div>
-    <div class="metric">
-      <div class="metric-value">${latestSession?.overall || 0}%</div>
-      <div class="metric-label">Latest Score</div>
-    </div>
-    <div class="metric">
-      <div class="metric-value">${improvement >= 0 ? '+' : ''}${improvement.toFixed(0)}%</div>
-      <div class="metric-label">Improvement</div>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-title">Session History</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Kick Type</th>
-          <th>Overall</th>
-          <th>Form</th>
-          <th>Power</th>
-          <th>Balance</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${(sessions || []).slice(-10).map(s => `
+    <div class="section">
+      <div class="section-title">Session History</div>
+      <table>
+        <thead>
           <tr>
-            <td>${s.date || 'N/A'}</td>
-            <td>${(s.kickType || 'N/A').replace(/_/g, ' ')}</td>
-            <td>${s.overallScore || 0}%</td>
-            <td>${s.formScore || 0}%</td>
-            <td>${s.powerScore || 0}%</td>
-            <td>${s.balanceScore || 0}%</td>
+            <th>Date</th>
+            <th>Kick Type</th>
+            <th>Overall</th>
+            <th>Form</th>
+            <th>Power</th>
+            <th>Balance</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          ${(sessions || []).slice(-10).reverse().map(s => {
+            const scoreClass = s.overallScore >= 80 ? 'score-high' : s.overallScore >= 60 ? 'score-medium' : 'score-low';
+            return `
+              <tr>
+                <td>${s.date || 'N/A'}</td>
+                <td style="text-transform: capitalize;">${(s.kickType || 'N/A').replace(/_/g, ' ')}</td>
+                <td><span class="score-badge ${scoreClass}">${s.overallScore || 0}%</span></td>
+                <td>${s.formScore || 0}%</td>
+                <td>${s.powerScore || 0}%</td>
+                <td>${s.balanceScore || 0}%</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
 
-  <div class="footer">
-    <p>Generated by JOC Taekwondo Analyzer Pro</p>
-    <p>Powered by QUALIA SOLUTIONS for Jordan Olympic Committee</p>
-    <p>${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+    <div class="footer">
+      <p><span class="footer-logo">JOC Taekwondo Analyzer Pro</span></p>
+      <p style="margin-top: 8px;">Powered by QUALIA SOLUTIONS for Jordan Olympic Committee</p>
+      <p style="margin-top: 4px;">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${new Date().toLocaleTimeString()}</p>
+    </div>
   </div>
 </body>
 </html>`;
 
-    // Download HTML file
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -190,7 +242,6 @@ const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, anal
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    // Add to recent reports
     setRecentReports(prev => [{
       id: Date.now(),
       name: `${reportTypes.find(r => r.id === reportType)?.name} - ${new Date().toLocaleDateString()}`,
@@ -199,24 +250,6 @@ const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, anal
     }, ...prev.slice(0, 4)]);
 
     setGenerating(false);
-  };
-
-  const addAthlete = () => {
-    if (newAthleteName.trim()) {
-      setAthletes(prev => [...prev, {
-        id: Date.now(),
-        name: newAthleteName.trim(),
-        sessions: 0,
-        avgScore: 0,
-        createdAt: new Date().toISOString(),
-      }]);
-      setNewAthleteName('');
-      setShowAddAthlete(false);
-    }
-  };
-
-  const removeAthlete = (id) => {
-    setAthletes(prev => prev.filter(a => a.id !== id));
   };
 
   const exportData = (format) => {
@@ -251,378 +284,534 @@ const ProgressReportsTab = ({ sessions, setSessions, athletes, setAthletes, anal
     URL.revokeObjectURL(url);
   };
 
+  // Custom tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#0f0f18] border border-joc-gold/30 rounded-xl p-4 shadow-2xl">
+          <p className="text-sm text-gray-400 mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} className="text-sm font-semibold" style={{ color: entry.color }}>
+              {entry.name}: {entry.value}%
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header with View Toggle */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-            <TrendingUp size={20} className="text-white" />
-          </div>
+    <div className="space-y-8">
+      {/* Premium Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6"
+      >
+        <div className="flex items-center gap-4">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            className="relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl blur-lg opacity-50" />
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl">
+              <TrendingUp size={26} className="text-white" />
+            </div>
+          </motion.div>
           <div>
-            <h2 className="text-xl font-bold text-white">Progress & Reports</h2>
-            <p className="text-sm text-gray-400">Track improvement and generate reports</p>
+            <h2 className="text-2xl font-bold text-white">Progress & Reports</h2>
+            <p className="text-gray-400">Track improvement and generate JOC reports</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/10">
-          <button
-            onClick={() => setActiveView('progress')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeView === 'progress'
-                ? 'bg-joc-gold text-joc-dark'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <BarChart size={16} />
-              Progress
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveView('reports')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeView === 'reports'
-                ? 'bg-joc-gold text-joc-dark'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <FileText size={16} />
-              Reports
-            </span>
-          </button>
+        {/* View Toggle */}
+        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#0a0a12]/80 backdrop-blur-xl border border-white/5">
+          {[
+            { id: 'progress', label: 'Progress', icon: BarChart },
+            { id: 'reports', label: 'Reports', icon: FileText },
+          ].map((view) => (
+            <motion.button
+              key={view.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveView(view.id)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeView === view.id
+                  ? 'bg-gradient-to-r from-joc-gold to-amber-500 text-[#0a0a12] shadow-lg shadow-joc-gold/30'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <view.icon size={18} />
+              {view.label}
+            </motion.button>
+          ))}
         </div>
-      </div>
+      </motion.div>
 
       <AnimatePresence mode="wait">
         {activeView === 'progress' ? (
           <motion.div
             key="progress"
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="space-y-6"
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-8"
           >
             {!hasSessions ? (
-              /* Empty State */
-              <div className="text-center py-12">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-joc-gold/20 to-amber-500/10 flex items-center justify-center mx-auto mb-6">
-                  <BarChart size={40} className="text-joc-gold/50" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">No Session History</h3>
-                <p className="text-gray-400 max-w-md mx-auto mb-8">
-                  Analyze videos in the Video Analysis tab to build your progress history. Each analysis will be tracked here.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                  {['Analyze Videos', 'Build History', 'Track Progress'].map((step, idx) => (
-                    <div key={step} className="p-4 rounded-xl bg-white/5 border border-white/10">
-                      <div className="w-8 h-8 rounded-full bg-joc-gold/20 flex items-center justify-center mx-auto mb-3 text-joc-gold font-bold">
-                        {idx + 1}
-                      </div>
-                      <p className="font-medium text-white">{step}</p>
+              /* Premium Empty State */
+              <div className="flex flex-col items-center justify-center min-h-[500px]">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center max-w-md"
+                >
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative mx-auto mb-8"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 to-teal-500/20 rounded-3xl blur-2xl" />
+                    <div className="relative w-28 h-28 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10 flex items-center justify-center">
+                      <LineChartIcon size={50} className="text-emerald-400/50" />
                     </div>
-                  ))}
-                </div>
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-white mb-3">No Session History Yet</h3>
+                  <p className="text-gray-400 mb-8 leading-relaxed">
+                    Analyze videos in the Video Analysis tab to build your progress history. Each analysis will be automatically tracked here.
+                  </p>
+
+                  {/* Steps */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { step: 1, title: 'Analyze Videos', icon: Target },
+                      { step: 2, title: 'Build History', icon: BarChart },
+                      { step: 3, title: 'Track Progress', icon: TrendingUp },
+                    ].map((item, idx) => (
+                      <motion.div
+                        key={item.step}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="p-4 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-joc-gold/10 flex items-center justify-center mx-auto mb-3">
+                          <item.icon size={20} className="text-joc-gold" />
+                        </div>
+                        <p className="text-sm font-medium text-white">{item.title}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 mt-8 text-sm text-joc-gold">
+                    <Info size={16} />
+                    <span>Go to Video Analysis tab to get started</span>
+                    <ArrowRight size={16} />
+                  </div>
+                </motion.div>
               </div>
             ) : (
               <>
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-xl bg-gradient-to-br from-joc-gold/10 to-amber-500/5 border border-joc-gold/20"
-                  >
-                    <div className="text-3xl font-bold text-joc-gold">{sessions.length}</div>
-                    <div className="text-sm text-gray-400">Total Sessions</div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="p-4 rounded-xl bg-white/5 border border-white/10"
-                  >
-                    <div className="text-3xl font-bold text-green-400">{avgScore.toFixed(0)}%</div>
-                    <div className="text-sm text-gray-400">Average Score</div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="p-4 rounded-xl bg-white/5 border border-white/10"
-                  >
-                    <div className="text-3xl font-bold text-blue-400">{latestSession?.overall || 0}%</div>
-                    <div className="text-sm text-gray-400">Latest Score</div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="p-4 rounded-xl bg-white/5 border border-white/10"
-                  >
-                    <div className={`text-3xl font-bold ${improvement >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {improvement >= 0 ? '+' : ''}{improvement.toFixed(0)}%
-                    </div>
-                    <div className="text-sm text-gray-400">Improvement</div>
-                  </motion.div>
+                  {[
+                    { label: 'Total Sessions', value: sessions.length, icon: Award, color: 'joc-gold' },
+                    { label: 'Average Score', value: `${avgScore.toFixed(0)}%`, icon: Target, color: 'emerald-400' },
+                    { label: 'Best Score', value: `${bestScore}%`, icon: TrendingUp, color: 'blue-400' },
+                    { label: 'Improvement', value: `${improvement >= 0 ? '+' : ''}${improvement.toFixed(0)}%`, icon: Clock, color: improvement >= 0 ? 'emerald-400' : 'red-400' },
+                  ].map((stat, idx) => (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      className={`p-5 rounded-2xl bg-gradient-to-br ${
+                        stat.color === 'joc-gold' ? 'from-joc-gold/10 to-amber-500/5 border-joc-gold/20' : 'from-white/5 to-white/[0.02] border-white/10'
+                      } border transition-all`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm text-gray-400">{stat.label}</span>
+                        <div className={`p-2 rounded-lg ${stat.color === 'joc-gold' ? 'bg-joc-gold/10' : `bg-${stat.color}/10`}`}>
+                          <stat.icon size={16} className={`text-${stat.color}`} />
+                        </div>
+                      </div>
+                      <div className={`text-4xl font-black text-${stat.color}`}>{stat.value}</div>
+                    </motion.div>
+                  ))}
                 </div>
 
                 {/* Metric Selector */}
                 <div className="flex flex-wrap gap-2">
-                  {metrics.map((metric) => (
-                    <button
+                  {metrics.map((metric, idx) => (
+                    <motion.button
                       key={metric.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedMetric(metric.id)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                         selectedMetric === metric.id
-                          ? 'bg-joc-gold text-joc-dark'
-                          : 'bg-white/5 hover:bg-white/10 text-gray-400'
+                          ? 'bg-gradient-to-r from-joc-gold to-amber-500 text-[#0a0a12] shadow-lg shadow-joc-gold/20'
+                          : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10'
                       }`}
                     >
+                      <metric.icon size={16} />
                       {metric.name}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
 
                 {/* Progress Chart */}
-                <div className="p-5 rounded-xl bg-white/5 border border-white/10">
-                  <h3 className="text-lg font-semibold text-white mb-4">
-                    {metrics.find(m => m.id === selectedMetric)?.name} Over Time
-                  </h3>
-                  <ResponsiveContainer width="100%" height={300}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-joc-gold/10 flex items-center justify-center">
+                      <LineChartIcon size={20} className="text-joc-gold" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        {metrics.find(m => m.id === selectedMetric)?.name} Over Time
+                      </h3>
+                      <p className="text-sm text-gray-500">Track your improvement across sessions</p>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={320}>
                     <AreaChart data={progressData}>
                       <defs>
                         <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={metrics.find(m => m.id === selectedMetric)?.color} stopOpacity={0.3} />
+                          <stop offset="5%" stopColor={metrics.find(m => m.id === selectedMetric)?.color} stopOpacity={0.4} />
                           <stop offset="95%" stopColor={metrics.find(m => m.id === selectedMetric)?.color} stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                      <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 12 }} />
-                      <YAxis stroke="#666" domain={[0, 100]} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1a1a2e',
-                          border: '1px solid #D4AF37',
-                          borderRadius: '8px',
-                        }}
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="date" stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} />
+                      <YAxis stroke="rgba(255,255,255,0.3)" domain={[0, 100]} tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} />
+                      <Tooltip content={<CustomTooltip />} />
                       <Area
                         type="monotone"
                         dataKey={selectedMetric}
                         stroke={metrics.find(m => m.id === selectedMetric)?.color}
                         fill="url(#progressGradient)"
-                        strokeWidth={2}
+                        strokeWidth={3}
+                        name={metrics.find(m => m.id === selectedMetric)?.name}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
+                </motion.div>
 
                 {/* Recent Sessions */}
-                <div className="p-5 rounded-xl bg-white/5 border border-white/10">
-                  <h3 className="text-lg font-semibold text-white mb-4">Recent Sessions</h3>
-                  <div className="space-y-2">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                      <Calendar size={20} className="text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Recent Sessions</h3>
+                      <p className="text-sm text-gray-500">Your latest analysis results</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
                     {progressData.slice(-5).reverse().map((session, idx) => (
                       <motion.div
                         key={idx}
-                        initial={{ opacity: 0, x: -10 }}
+                        initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.05 }}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                        whileHover={{ x: 4 }}
+                        className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-joc-gold/10 flex items-center justify-center">
-                            <Calendar size={18} className="text-joc-gold" />
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-joc-gold/10 flex items-center justify-center">
+                            <Calendar size={22} className="text-joc-gold" />
                           </div>
                           <div>
-                            <p className="font-medium text-white">{session.date}</p>
-                            <p className="text-xs text-gray-500">
-                              Form: {session.form}% | Power: {session.power}% | Balance: {session.balance}%
-                            </p>
+                            <p className="font-semibold text-white">{session.date}</p>
+                            <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                              <span>Form: {session.form}%</span>
+                              <span>Power: {session.power}%</span>
+                              <span>Balance: {session.balance}%</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-xl font-bold text-joc-gold">{session.overall}%</div>
+                        <div className="text-right">
+                          <div className="text-2xl font-black text-joc-gold">{session.overall}%</div>
+                          <div className="text-xs text-gray-500">Overall</div>
+                        </div>
                       </motion.div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               </>
             )}
           </motion.div>
         ) : (
+          /* Reports View */
           <motion.div
             key="reports"
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-8"
           >
             {/* Report Type Selection */}
-            <div className="p-5 rounded-xl bg-white/5 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4">Generate Report</h3>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-joc-gold/10 flex items-center justify-center">
+                  <FileText size={20} className="text-joc-gold" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Generate Report</h3>
+                  <p className="text-sm text-gray-500">Choose report type and customize</p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {reportTypes.map((type) => (
+                {reportTypes.map((type, idx) => (
                   <motion.button
                     key={type.id}
-                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setReportType(type.id)}
-                    className={`p-4 rounded-xl text-left transition-all ${
+                    className={`relative p-6 rounded-2xl text-left transition-all overflow-hidden ${
                       reportType === type.id
-                        ? 'bg-gradient-to-br from-joc-gold/20 to-amber-500/10 border-2 border-joc-gold'
-                        : 'bg-white/5 border-2 border-transparent hover:border-white/20'
+                        ? `bg-gradient-to-br from-${type.color}-500/20 to-${type.color}-500/5 border-2 border-${type.color}-500/50 shadow-lg shadow-${type.color}-500/20`
+                        : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    <div className="text-2xl mb-2">{type.icon}</div>
-                    <h4 className={`font-semibold ${reportType === type.id ? 'text-joc-gold' : 'text-white'}`}>
+                    {reportType === type.id && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute top-4 right-4"
+                      >
+                        <div className={`w-6 h-6 rounded-full bg-${type.color}-500 flex items-center justify-center`}>
+                          <Check size={14} className="text-white" />
+                        </div>
+                      </motion.div>
+                    )}
+                    <div className={`w-12 h-12 rounded-xl ${reportType === type.id ? `bg-${type.color}-500/20` : 'bg-white/5'} flex items-center justify-center mb-4`}>
+                      <type.icon size={24} className={reportType === type.id ? `text-${type.color}-400` : 'text-gray-400'} />
+                    </div>
+                    <h4 className={`font-bold mb-1 ${reportType === type.id ? `text-${type.color}-400` : 'text-white'}`}>
                       {type.name}
                     </h4>
-                    <p className="text-sm text-gray-400 mt-1">{type.description}</p>
+                    <p className="text-sm text-gray-500">{type.description}</p>
                   </motion.button>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
-            {/* Report Options & Preview */}
+            {/* Report Options */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="p-5 rounded-xl bg-white/5 border border-white/10 space-y-4">
-                <h3 className="text-lg font-semibold text-white">Report Options</h3>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+              >
+                <h3 className="text-lg font-bold text-white mb-6">Report Options</h3>
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Date Range</label>
-                  <select
-                    value={dateRange}
-                    onChange={(e) => setDateRange(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-joc-gold focus:outline-none"
-                  >
-                    <option value="session">Single Session</option>
-                    <option value="week">Last Week</option>
-                    <option value="month">Last Month</option>
-                    <option value="all">All Time</option>
-                  </select>
-                </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-3">Date Range</label>
+                    <select
+                      value={dateRange}
+                      onChange={(e) => setDateRange(e.target.value)}
+                      className="w-full p-4 rounded-xl bg-white/5 border border-white/10 text-white focus:border-joc-gold focus:outline-none transition-all"
+                    >
+                      <option value="session">Single Session</option>
+                      <option value="week">Last Week</option>
+                      <option value="month">Last Month</option>
+                      <option value="all">All Time</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Include Sections</label>
-                  <div className="space-y-2">
-                    {['Performance Metrics', 'Session History', 'Progress Charts', 'Recommendations'].map((section) => (
-                      <label key={section} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
-                        <input type="checkbox" defaultChecked className="rounded border-gray-600 text-joc-gold focus:ring-joc-gold" />
-                        <span className="text-sm text-gray-300">{section}</span>
-                      </label>
-                    ))}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-3">Include Sections</label>
+                    <div className="space-y-2">
+                      {[
+                        { id: 'metrics', label: 'Performance Metrics' },
+                        { id: 'history', label: 'Session History' },
+                        { id: 'charts', label: 'Progress Charts' },
+                        { id: 'recommendations', label: 'Recommendations' },
+                      ].map((section) => (
+                        <label
+                          key={section.id}
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-all"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={reportSections[section.id]}
+                            onChange={(e) => setReportSections(prev => ({ ...prev, [section.id]: e.target.checked }))}
+                            className="w-5 h-5 rounded border-gray-600 text-joc-gold focus:ring-joc-gold"
+                          />
+                          <span className="text-sm text-gray-300">{section.label}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Preview */}
-              <div className="p-5 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-lg font-semibold text-white mb-4">Preview</h3>
-                <div className="bg-white rounded-xl p-4 text-gray-900">
-                  <div className="flex items-center justify-between border-b-2 border-joc-gold pb-3 mb-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+              >
+                <h3 className="text-lg font-bold text-white mb-6">Report Preview</h3>
+                <div className="bg-gradient-to-br from-white to-gray-100 rounded-2xl p-5 text-gray-900">
+                  <div className="flex items-center justify-between border-b-2 border-joc-gold pb-4 mb-4">
                     <div>
-                      <h4 className="text-lg font-bold text-joc-dark">JOC Taekwondo Analyzer</h4>
+                      <h4 className="text-lg font-bold text-gray-900">JOC Taekwondo Analyzer</h4>
                       <p className="text-xs text-gray-500">Jordan Olympic Committee</p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-joc-gold to-amber-500 flex items-center justify-center text-joc-dark font-bold text-sm">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-joc-gold to-amber-500 flex items-center justify-center text-gray-900 font-bold text-sm shadow-lg">
                       JOC
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Report Type:</span>
-                      <span className="font-medium">{reportTypes.find(r => r.id === reportType)?.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Sessions:</span>
-                      <span className="font-medium">{sessions?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Average Score:</span>
-                      <span className="font-medium">{avgScore.toFixed(0)}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Generated:</span>
-                      <span className="font-medium">{new Date().toLocaleDateString()}</span>
-                    </div>
+                  <div className="space-y-3 text-sm">
+                    {[
+                      { label: 'Report Type', value: reportTypes.find(r => r.id === reportType)?.name },
+                      { label: 'Sessions', value: sessions?.length || 0 },
+                      { label: 'Average Score', value: `${avgScore.toFixed(0)}%` },
+                      { label: 'Generated', value: new Date().toLocaleDateString() },
+                    ].map((item) => (
+                      <div key={item.label} className="flex justify-between">
+                        <span className="text-gray-500">{item.label}:</span>
+                        <span className="font-semibold text-gray-900">{item.value}</span>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t text-xs text-gray-400 text-center">
+                  <div className="mt-4 pt-4 border-t text-xs text-gray-400 text-center">
                     Generated by QUALIA SOLUTIONS for JOC
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Generate Button */}
-            <div className="flex flex-wrap gap-4">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={generateReport}
-                disabled={generating}
-                className="px-8 py-4 rounded-xl font-semibold bg-gradient-to-r from-joc-gold via-yellow-500 to-amber-500 text-joc-dark shadow-lg shadow-joc-gold/20 flex items-center gap-2 disabled:opacity-50"
-              >
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={generateReport}
+              disabled={generating}
+              className="relative w-full py-5 rounded-2xl font-bold text-lg overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-joc-gold via-yellow-400 to-amber-500" />
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500 via-yellow-400 to-joc-gold opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <span className="relative flex items-center justify-center gap-3 text-[#0a0a12]">
                 {generating ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-joc-dark border-t-transparent rounded-full animate-spin" />
-                    Generating...
+                    <div className="w-6 h-6 border-3 border-[#0a0a12] border-t-transparent rounded-full animate-spin" />
+                    Generating Report...
                   </>
                 ) : (
                   <>
-                    <Download size={20} />
-                    Generate HTML Report
+                    <Download size={24} />
+                    Generate & Download Report
+                    <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
-              </motion.button>
-            </div>
+              </span>
+            </motion.button>
 
             {/* Export Data */}
-            <div className="p-5 rounded-xl bg-white/5 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4">Export Data</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button
-                  onClick={() => exportData('csv')}
-                  className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-center transition-all"
-                >
-                  <div className="text-2xl mb-2">📊</div>
-                  <div className="font-medium text-white">CSV</div>
-                </button>
-                <button
-                  onClick={() => exportData('json')}
-                  className="p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-center transition-all"
-                >
-                  <div className="text-2xl mb-2">📋</div>
-                  <div className="font-medium text-white">JSON</div>
-                </button>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                  <Download size={20} className="text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Export Raw Data</h3>
+                  <p className="text-sm text-gray-500">Download your data in different formats</p>
+                </div>
               </div>
-            </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { format: 'csv', icon: FileSpreadsheet, label: 'CSV Spreadsheet', color: 'emerald' },
+                  { format: 'json', icon: FileJson, label: 'JSON Data', color: 'blue' },
+                ].map((item) => (
+                  <motion.button
+                    key={item.format}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => exportData(item.format)}
+                    className={`p-5 rounded-2xl bg-white/5 hover:bg-${item.color}-500/10 border border-white/10 hover:border-${item.color}-500/30 transition-all group`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-${item.color}-500/10 flex items-center justify-center mb-3 group-hover:bg-${item.color}-500/20 transition-colors`}>
+                      <item.icon size={24} className={`text-${item.color}-400`} />
+                    </div>
+                    <div className="font-semibold text-white">{item.label}</div>
+                    <div className="text-xs text-gray-500 mt-1">.{item.format} format</div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
 
             {/* Recent Reports */}
             {recentReports.length > 0 && (
-              <div className="p-5 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-lg font-semibold text-white mb-4">Recent Reports</h3>
-                <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="p-6 rounded-3xl bg-gradient-to-br from-[#0f0f18] to-[#080810] border border-white/10"
+              >
+                <h3 className="text-lg font-bold text-white mb-6">Recent Reports</h3>
+                <div className="space-y-3">
                   {recentReports.map((report) => (
-                    <div
+                    <motion.div
                       key={report.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                      whileHover={{ x: 4 }}
+                      className="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="text-xl">{reportTypes.find(r => r.id === report.type)?.icon}</div>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-joc-gold/10 flex items-center justify-center">
+                          <FileText size={22} className="text-joc-gold" />
+                        </div>
                         <div>
-                          <p className="font-medium text-white">{report.name}</p>
+                          <p className="font-semibold text-white">{report.name}</p>
                           <p className="text-xs text-gray-500">{new Date(report.date).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <ChevronRight size={18} className="text-gray-400" />
-                    </div>
+                      <ChevronRight size={20} className="text-gray-400" />
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
           </motion.div>
         )}
