@@ -2,6 +2,153 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
+// ============================================
+// Rate Limiting Configuration
+// ============================================
+const RATE_LIMIT = {
+  maxRequestsPerMinute: 15, // Gemini free tier limit
+  minIntervalMs: 4000, // Minimum 4 seconds between requests
+  retryDelayMs: 10000, // Wait 10s on rate limit error
+  maxRetries: 3
+};
+
+// Request queue and timestamps
+let requestQueue = [];
+let requestTimestamps = [];
+let isProcessing = false;
+
+// ============================================
+// Caching System
+// ============================================
+const CACHE_CONFIG = {
+  maxAge: 5 * 60 * 1000, // 5 minutes cache
+  maxSize: 50 // Maximum cached responses
+};
+
+const responseCache = new Map();
+
+function generateCacheKey(data) {
+  return JSON.stringify(data).substring(0, 500); // Use first 500 chars as key
+}
+
+function getCachedResponse(key) {
+  const cached = responseCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_CONFIG.maxAge) {
+    console.log('📦 Using cached Gemini response');
+    return cached.data;
+  }
+  if (cached) {
+    responseCache.delete(key); // Remove expired cache
+  }
+  return null;
+}
+
+function setCachedResponse(key, data) {
+  // Enforce max cache size
+  if (responseCache.size >= CACHE_CONFIG.maxSize) {
+    const oldestKey = responseCache.keys().next().value;
+    responseCache.delete(oldestKey);
+  }
+  responseCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ============================================
+// Rate Limiting Functions
+// ============================================
+function cleanOldTimestamps() {
+  const oneMinuteAgo = Date.now() - 60000;
+  requestTimestamps = requestTimestamps.filter(ts => ts > oneMinuteAgo);
+}
+
+function canMakeRequest() {
+  cleanOldTimestamps();
+  if (requestTimestamps.length >= RATE_LIMIT.maxRequestsPerMinute) {
+    return false;
+  }
+  const lastRequest = requestTimestamps[requestTimestamps.length - 1] || 0;
+  return Date.now() - lastRequest >= RATE_LIMIT.minIntervalMs;
+}
+
+async function waitForRateLimit() {
+  cleanOldTimestamps();
+
+  if (requestTimestamps.length >= RATE_LIMIT.maxRequestsPerMinute) {
+    const oldestTimestamp = requestTimestamps[0];
+    const waitTime = 60000 - (Date.now() - oldestTimestamp) + 1000;
+    console.log(`⏳ Rate limit reached. Waiting ${Math.ceil(waitTime/1000)}s...`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+
+  const lastRequest = requestTimestamps[requestTimestamps.length - 1] || 0;
+  const timeSinceLast = Date.now() - lastRequest;
+
+  if (timeSinceLast < RATE_LIMIT.minIntervalMs) {
+    const waitTime = RATE_LIMIT.minIntervalMs - timeSinceLast;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+}
+
+function recordRequest() {
+  requestTimestamps.push(Date.now());
+}
+
+// ============================================
+// Retry Logic with Exponential Backoff
+// ============================================
+async function executeWithRetry(fn, retries = RATE_LIMIT.maxRetries) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await waitForRateLimit();
+      recordRequest();
+      return await fn();
+    } catch (error) {
+      const isRateLimitError = error.message?.includes('429') ||
+                               error.message?.includes('quota') ||
+                               error.message?.includes('rate');
+
+      if (isRateLimitError && attempt < retries) {
+        const delay = RATE_LIMIT.retryDelayMs * attempt;
+        console.warn(`⚠️ Rate limit hit. Retry ${attempt}/${retries} in ${delay/1000}s`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      if (attempt === retries) {
+        console.error('❌ Max retries exceeded for Gemini API');
+        throw error;
+      }
+
+      throw error;
+    }
+  }
+}
+
+// ============================================
+// Get Rate Limit Status (for UI display)
+// ============================================
+export function getRateLimitStatus() {
+  cleanOldTimestamps();
+  return {
+    requestsInLastMinute: requestTimestamps.length,
+    maxRequestsPerMinute: RATE_LIMIT.maxRequestsPerMinute,
+    remainingRequests: Math.max(0, RATE_LIMIT.maxRequestsPerMinute - requestTimestamps.length),
+    canMakeRequest: canMakeRequest(),
+    cacheSize: responseCache.size,
+    cacheMaxSize: CACHE_CONFIG.maxSize
+  };
+}
+
+// ============================================
+// Clear Cache (for manual refresh)
+// ============================================
+export function clearCache() {
+  responseCache.clear();
+  console.log('🗑️ Gemini response cache cleared');
+}
+
+// ============================================
+// Taekwondo Analysis Prompt
+// ============================================
 const TAEKWONDO_ANALYSIS_PROMPT = `You are an expert Taekwondo biomechanical analyst for the Jordan Olympic Committee.
 Analyze the following pose data and provide a detailed technical assessment.
 
@@ -45,13 +192,22 @@ Provide response as JSON with this exact structure:
   "confidenceLevel": "high|medium|low"
 }`;
 
+// ============================================
+// Main Analysis Function (with caching and rate limiting)
+// ============================================
 export async function analyzeWithGemini(landmarks, kickType, frameCount, fps) {
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  // Generate cache key
+  const cacheKey = generateCacheKey({ landmarks: landmarks?.slice(0, 5), kickType, frameCount });
 
-    const landmarkSummary = summarizeLandmarks(landmarks);
+  // Check cache first
+  const cached = getCachedResponse(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
-    const prompt = `${TAEKWONDO_ANALYSIS_PROMPT}
+  const landmarkSummary = summarizeLandmarks(landmarks);
+
+  const prompt = `${TAEKWONDO_ANALYSIS_PROMPT}
 
 POSE DATA:
 - Kick Type: ${kickType}
@@ -61,28 +217,38 @@ POSE DATA:
 
 Analyze this technique and provide your assessment as JSON only (no markdown, no explanation):`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+  const result = await executeWithRetry(async () => {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const response = await model.generateContent(prompt);
+    return response;
+  });
 
-    // Parse JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
+  const response = await result.response;
+  const text = response.text();
 
-    throw new Error('Invalid response format from Gemini');
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    throw error;
+  // Parse JSON from response
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    const parsed = JSON.parse(jsonMatch[0]);
+    setCachedResponse(cacheKey, parsed);
+    return parsed;
   }
+
+  throw new Error('Invalid response format from Gemini');
 }
 
+// ============================================
+// Coaching Feedback (with caching and rate limiting)
+// ============================================
 export async function generateCoachingFeedback(analysisData, athleteHistory) {
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const cacheKey = generateCacheKey({ type: 'coaching', analysisData });
 
-    const prompt = `As a World Taekwondo certified coach, provide 3-5 specific coaching recommendations based on this analysis:
+  const cached = getCachedResponse(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const prompt = `As a World Taekwondo certified coach, provide 3-5 specific coaching recommendations based on this analysis:
 
 Current Analysis:
 ${JSON.stringify(analysisData, null, 2)}
@@ -92,13 +258,20 @@ ${athleteHistory ? `Athlete History: ${JSON.stringify(athleteHistory, null, 2)}`
 Provide actionable, specific feedback for Olympic-level training. Response as JSON array:
 [{ "priority": "high|medium|low", "area": "string", "recommendation": "string", "drill": "string" }]`;
 
-    const result = await model.generateContent(prompt);
+  try {
+    const result = await executeWithRetry(async () => {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      return await model.generateContent(prompt);
+    });
+
     const response = await result.response;
     const text = response.text();
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      setCachedResponse(cacheKey, parsed);
+      return parsed;
     }
 
     return [];
@@ -108,6 +281,9 @@ Provide actionable, specific feedback for Olympic-level training. Response as JS
   }
 }
 
+// ============================================
+// Landmark Summary Helper
+// ============================================
 function summarizeLandmarks(landmarks) {
   if (!landmarks || landmarks.length === 0) {
     return { status: 'no_landmarks', message: 'No pose data available' };
@@ -176,13 +352,20 @@ function summarizeLandmarks(landmarks) {
   };
 }
 
+// ============================================
+// Kick Type Detection (with caching and rate limiting)
+// ============================================
 export async function detectKickType(landmarks) {
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const cacheKey = generateCacheKey({ type: 'kickDetect', landmarks: landmarks?.slice(0, 10) });
 
-    const landmarkSummary = summarizeLandmarks(landmarks);
+  const cached = getCachedResponse(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
-    const prompt = `Based on these Taekwondo pose landmarks, identify the most likely kick type being performed:
+  const landmarkSummary = summarizeLandmarks(landmarks);
+
+  const prompt = `Based on these Taekwondo pose landmarks, identify the most likely kick type being performed:
 
 Landmark Data: ${JSON.stringify(landmarkSummary)}
 
@@ -190,13 +373,20 @@ Possible kicks: dollyo_chagi, yeop_chagi, ap_chagi, dwi_chagi, naeryo_chagi, dwi
 
 Response as JSON only: { "kickType": "string", "confidence": number (0-1) }`;
 
-    const result = await model.generateContent(prompt);
+  try {
+    const result = await executeWithRetry(async () => {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      return await model.generateContent(prompt);
+    });
+
     const response = await result.response;
     const text = response.text();
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      setCachedResponse(cacheKey, parsed);
+      return parsed;
     }
 
     return { kickType: 'unknown', confidence: 0 };
@@ -209,5 +399,7 @@ Response as JSON only: { "kickType": "string", "confidence": number (0-1) }`;
 export default {
   analyzeWithGemini,
   generateCoachingFeedback,
-  detectKickType
+  detectKickType,
+  getRateLimitStatus,
+  clearCache
 };
