@@ -108,37 +108,54 @@ export const sessionService = {
 };
 
 // Analysis results table operations
+// Always use localStorage - Supabase analyses table may not exist
 export const analysisService = {
   async save(analysisData) {
-    if (!supabase) {
-      // Store locally if Supabase not configured
-      const stored = JSON.parse(localStorage.getItem('joc_analyses') || '[]');
-      const newAnalysis = { ...analysisData, id: Date.now(), created_at: new Date().toISOString() };
-      stored.push(newAnalysis);
-      localStorage.setItem('joc_analyses', JSON.stringify(stored));
-      return { data: newAnalysis, error: null };
+    // Always save to localStorage for reliability
+    const stored = JSON.parse(localStorage.getItem('joc_analyses') || '[]');
+    const newAnalysis = {
+      ...analysisData,
+      id: Date.now(),
+      created_at: new Date().toISOString()
+    };
+    stored.push(newAnalysis);
+    // Keep only last 100 analyses to prevent localStorage bloat
+    if (stored.length > 100) {
+      stored.splice(0, stored.length - 100);
+    }
+    localStorage.setItem('joc_analyses', JSON.stringify(stored));
+
+    // Try to sync to Supabase if configured (non-blocking)
+    if (supabase) {
+      try {
+        await supabase.from('analyses').insert([{
+          kick_type: analysisData.kickType,
+          overall_score: analysisData.overallScore,
+          form_score: analysisData.formScore,
+          power_score: analysisData.powerScore,
+          balance_score: analysisData.balanceScore,
+          analysis_date: new Date().toISOString(),
+          metrics: analysisData.metrics
+        }]);
+      } catch (e) {
+        // Silently fail - localStorage is the primary storage
+        console.log('Supabase sync skipped (table may not exist)');
+      }
     }
 
-    const { data, error } = await supabase
-      .from('analyses')
-      .insert([analysisData])
-      .select()
-      .single();
-    return { data, error };
+    return { data: newAnalysis, error: null };
   },
 
   async getRecent(limit = 10) {
-    if (!supabase) {
-      const stored = JSON.parse(localStorage.getItem('joc_analyses') || '[]');
-      return { data: stored.slice(-limit).reverse(), error: null };
-    }
+    // Always read from localStorage for reliability
+    const stored = JSON.parse(localStorage.getItem('joc_analyses') || '[]');
+    return { data: stored.slice(-limit).reverse(), error: null };
+  },
 
-    const { data, error } = await supabase
-      .from('analyses')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    return { data: data || [], error };
+  // Clear all stored analyses
+  clearAll() {
+    localStorage.removeItem('joc_analyses');
+    return { error: null };
   }
 };
 
